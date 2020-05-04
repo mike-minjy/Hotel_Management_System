@@ -1,0 +1,16 @@
+INSERT INTO `schedule`(`weekday`, `chefID`) VALUES ('Monday', 1);
+INSERT INTO `schedule`(`weekday`, `chefID`) VALUES ('Tuesday', 1);
+INSERT INTO `schedule`(`weekday`, `chefID`) VALUES ('Wednesday', 1);
+INSERT INTO `schedule`(`weekday`, `chefID`) VALUES ('Thursday', 1);
+INSERT INTO `schedule`(`weekday`, `chefID`) VALUES ('Friday', 1);
+INSERT INTO `schedule`(`weekday`, `chefID`) VALUES ('Wednesday', 2);
+INSERT INTO `schedule`(`weekday`, `chefID`) VALUES ('Thursday', 2);
+INSERT INTO `schedule`(`weekday`, `chefID`) VALUES ('Friday', 2);
+INSERT INTO `schedule`(`weekday`, `chefID`) VALUES ('Saturday', 2);
+INSERT INTO `schedule`(`weekday`, `chefID`) VALUES ('Sunday', 2);
+INSERT INTO `schedule`(`weekday`, `chefID`) VALUES ('Monday', 3);
+INSERT INTO `schedule`(`weekday`, `chefID`) VALUES ('Thursday', 3);
+INSERT INTO `schedule`(`weekday`, `chefID`) VALUES ('Saturday', 3);
+INSERT INTO `schedule`(`weekday`, `chefID`) VALUES ('Tuesday', 4);
+INSERT INTO `schedule`(`weekday`, `chefID`) VALUES ('Saturday', 4);
+INSERT INTO `schedule`(`weekday`, `chefID`) VALUES ('Sunday', 4);
