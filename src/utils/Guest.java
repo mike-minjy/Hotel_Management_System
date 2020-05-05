@@ -52,10 +52,11 @@ public class Guest {
         }
     }
 
-    public static byte login() {
+    public static int[] login() {
+        int[] ints = {1, 0};
         Map<String, String> userLoginInfo = verify();
         if (userLoginInfo == null) {
-            return 1;
+            return ints;
         }
         String username = userLoginInfo.get("username");
         String password = userLoginInfo.get("password");
@@ -80,6 +81,7 @@ public class Guest {
             System.out.println("---------------------------");
             System.out.println(result ? "Welcome back! " + username : "Login failed.");
             System.out.println("---------------------------");
+            ints[1] = resultSet.getInt("userID");
         } catch (Exception e) {
             e.printStackTrace();
 //            if (e.getMessage() != null) {
@@ -89,7 +91,7 @@ public class Guest {
         } finally {
             DB_Utility.close(connection, preparedStatement, resultSet);
         }
-        return 1;
+        return ints;
     }
 
     private static Map<String, String> verify() {
@@ -164,7 +166,7 @@ public class Guest {
         return 1;
     }
 
-    private static String[] getInfo() {//Maybe set it accessible after login is reality.
+    private static String[] getInfo() {
         DB_Utility.printCurrentTime();
         Scanner scanner = new Scanner(System.in);
         String[] personalInfo = new String[6];
@@ -260,6 +262,7 @@ public class Guest {
                     System.out.println("Invalid input. Phone Number could only includes digits.");
                     input = verifyEmpty(scanner, information, repeated);
                     if (input == null) return null;
+                    input = input.toUpperCase();
                 }
             }
             while (i == 5) {//email further checking
@@ -295,9 +298,9 @@ public class Guest {
         return input;
     }
 
-    public static byte update() {
+    public static byte update() {//It is also possible to use regular expression to verify the information.
         Map<String, String> loginVerification = verify();
-        if (loginVerification == null) {
+        if (loginVerification == null) {//It is more reasonable to be accessible after user login his/her account
             return 1;
         }
         String username = loginVerification.get("username");
@@ -420,6 +423,7 @@ public class Guest {
                         continue loopFlag;
                 }
                 input = scanner.nextLine().trim();
+                //Further checking same as register, still need enhancement
                 while (input.equals("") && !(changeInfo.equals("6") || changeInfo.equals("email"))) {
                     System.out.println("This information cannot be empty!");
                     if (changeInfo.length() != 1) {

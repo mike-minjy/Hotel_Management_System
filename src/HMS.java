@@ -33,6 +33,7 @@ public class HMS {
 
     private static void processing() throws Exception {
         byte step = welcome();
+        int loginPerson;
         while (true) {
             if (step == -1) {
                 System.out.println();
@@ -56,7 +57,9 @@ public class HMS {
             //Feedback from Guest Mode
             if (step == 3) {//--------------------------------Guest Login selected
                 System.out.println();
-                step = Guest.login();
+                int[] userInformation = Guest.login();
+                step = (byte) userInformation[0];
+                loginPerson = userInformation[1];//Get the login person
             } else if (step == 4) {//-------------------------Guest Sign Up selected
                 System.out.println();
                 step = Guest.register();
