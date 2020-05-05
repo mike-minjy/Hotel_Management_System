@@ -164,7 +164,7 @@ public class Guest {
         return 1;
     }
 
-    private static String[] getInfo() {
+    private static String[] getInfo() {//Maybe set it accessible after login is reality.
         DB_Utility.printCurrentTime();
         Scanner scanner = new Scanner(System.in);
         String[] personalInfo = new String[6];
@@ -190,7 +190,7 @@ public class Guest {
                     information = "your Real Name: ";//Regular expression verification
                     break;
                 case 3:
-                    information = "your passport ID: ";//Regular expression verification
+                    information = "your Passport ID: ";//Regular expression verification
                     break;
                 case 4:
                     information = "your Phone Number: ";//Regular expression verification
@@ -203,6 +203,9 @@ public class Guest {
             input = scanner.nextLine().trim();
             if (input.equalsIgnoreCase("Return")) {
                 return null;
+            }
+            if (i == 3) {
+                input = input.toUpperCase();//Automatically change characters to uppercase
             }
             while (input.isEmpty()) {
                 if (i == personalInfo.length - 1) {
@@ -228,26 +231,32 @@ public class Guest {
             }
             while (i == 2) {//real name further checking
                 Pattern pattern = Pattern.compile("^[[A-Za-z]|\\s]+$");
-                if (pattern.matcher(input).matches()){
+                if (pattern.matcher(input).matches()) {
                     break;
-                }else {
+                } else {
+                    System.out.println("============================================================");
                     System.out.println("Invalid input. Name could only includes character and space.");
                     input = verifyEmpty(scanner, information, repeated);
                     if (input == null) return null;
                 }
             }
             while (i == 3 && input.length() > 9) {//passport ID further checking
-                System.out.println("===========================================================================");
-                System.out.println("The standard passport ID length is not longer than 9 with digits and chars.");
-                System.out.print("Please input an valid Passport ID: ");
-                input = verifyEmpty(scanner, information, repeated);
-                if (input == null) return null;
+                Pattern pattern = Pattern.compile("^[A-Z0-9]+$");
+                if (pattern.matcher(input).matches()) {
+                    break;
+                } else {
+                    System.out.println("============================================================");
+                    System.out.println("Invalid input. The standard passport ID length is not longer than 9 bits including digits or UPPERCASE chars.");
+                    input = verifyEmpty(scanner, information, repeated);
+                    if (input == null) return null;
+                }
             }
             while (i == 4) {//phone number further checking
                 Pattern pattern = Pattern.compile("^[0-9]*$");
-                if (pattern.matcher(input).matches()){
+                if (pattern.matcher(input).matches()) {
                     break;
-                }else {
+                } else {
+                    System.out.println("=======================================================");
                     System.out.println("Invalid input. Phone Number could only includes digits.");
                     input = verifyEmpty(scanner, information, repeated);
                     if (input == null) return null;
@@ -255,9 +264,10 @@ public class Guest {
             }
             while (i == 5) {//email further checking
                 Pattern pattern = Pattern.compile("^\\w+([-+.]\\w+)*@\\w+([-.]\\w+)*\\.\\w+([-.]\\w+)*$");
-                if (pattern.matcher(input).matches()){
+                if (pattern.matcher(input).matches()) {
                     break;
-                }else {
+                } else {
+                    System.out.println("==========================================================================");
                     System.out.println("Invalid input. Email could does not includes special characters and space.");
                     input = verifyEmpty(scanner, information, repeated);
                     if (input == null) return null;
@@ -345,8 +355,8 @@ public class Guest {
                 int userID = resultSet.getInt("userID");
 
                 connection.setAutoCommit(false);        //Start transaction
-                for (int i=1;i<=attributes.size();i++) {
-                    System.out.println((i)+". " + attributes.get(String.valueOf(i)));
+                for (int i = 1; i <= attributes.size(); i++) {
+                    System.out.println((i) + ". " + attributes.get(String.valueOf(i)));
                 }
                 System.out.println("7. Cancel All Updates and Return");
                 System.out.println("8. Save and Return to previous page");
