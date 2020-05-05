@@ -5,6 +5,7 @@ import java.sql.*;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Scanner;
+import java.util.regex.Pattern;
 
 public class Guest {
 
@@ -101,7 +102,6 @@ public class Guest {
                 System.out.print("Please type in your username (type \"Return\" to cancel input): ");
                 username = scanner.nextLine();
                 if (username.trim().equalsIgnoreCase("Return")) {
-                    System.out.println();
                     return null;
                 }
             }
@@ -109,7 +109,6 @@ public class Guest {
                 System.out.print("Please type in your password (type \"Return\" to cancel input): ");
                 password = scanner.nextLine();
                 if (password.trim().equalsIgnoreCase("Return")) {
-                    System.out.println();
                     return null;
                 }
             }
@@ -128,7 +127,9 @@ public class Guest {
 
         String[] registerInfo = getInfo();
 
-        if (registerInfo == null) return 1;
+        if (registerInfo == null) {
+            return 1;
+        }
 
         Connection connection = null;
         PreparedStatement preparedStatement = null;
@@ -150,7 +151,6 @@ public class Guest {
 
             System.out.println();
             System.out.println("New guest \"" + registerInfo[0] + "\" registered successfully! Welcome to the family of Sunny Isle.");
-            System.out.println();
 
         } catch (Exception e) {
             e.printStackTrace();
@@ -187,22 +187,21 @@ public class Guest {
                     information = "the password: ";
                     break;
                 case 2:
-                    information = "your Real Name: ";//Checking is still developing
+                    information = "your Real Name: ";//Regular expression verification
                     break;
                 case 3:
-                    information = "your passport ID: ";//Checking is still developing
+                    information = "your passport ID: ";//Regular expression verification
                     break;
                 case 4:
-                    information = "your Phone Number: ";//Checking is still developing
+                    information = "your Phone Number: ";//Regular expression verification
                     break;
                 case 5:
-                    information = "your Email (Optional, click [Enter] to skip it): ";//Checking is still developing
+                    information = "your Email (Optional, click [Enter] to skip it): ";//Regular expression verification
                     break;
             }
             System.out.print(repeated + information);
             input = scanner.nextLine().trim();
             if (input.equalsIgnoreCase("Return")) {
-                System.out.println();
                 return null;
             }
             while (input.isEmpty()) {
@@ -214,33 +213,76 @@ public class Guest {
                 System.out.print(repeated + "a valid information of " + information);
                 input = scanner.nextLine().trim();
                 if (input.equalsIgnoreCase("Return")) {
-                    System.out.println();
                     return null;
                 }
             }
-            while (i == 0 && check) {
+            while (i == 0 && check) {//Username further checking
                 check = checkUsername(input);
                 if (!check) {
                     break;
                 }
                 System.out.println("===========================================================");
                 System.out.print("This username has already exist, please choose another one: ");
-                input = scanner.nextLine().trim();
-                if (input.equalsIgnoreCase("Return")) {
-                    System.out.println();
-                    return null;
-                }
-                check = checkUsername(input);
+                input = verifyEmpty(scanner, information, repeated);
+                if (input == null) return null;
             }
-            while (i == 3 && input.length() > 9) {
+            while (i == 2) {//real name further checking
+                Pattern pattern = Pattern.compile("^[[A-Za-z]|\\s]+$");
+                if (pattern.matcher(input).matches()){
+                    break;
+                }else {
+                    System.out.println("Invalid input. Name could only includes character and space.");
+                    input = verifyEmpty(scanner, information, repeated);
+                    if (input == null) return null;
+                }
+            }
+            while (i == 3 && input.length() > 9) {//passport ID further checking
                 System.out.println("===========================================================================");
                 System.out.println("The standard passport ID length is not longer than 9 with digits and chars.");
                 System.out.print("Please input an valid Passport ID: ");
-                input = scanner.nextLine().trim();
+                input = verifyEmpty(scanner, information, repeated);
+                if (input == null) return null;
+            }
+            while (i == 4) {//phone number further checking
+                Pattern pattern = Pattern.compile("^[0-9]*$");
+                if (pattern.matcher(input).matches()){
+                    break;
+                }else {
+                    System.out.println("Invalid input. Phone Number could only includes digits.");
+                    input = verifyEmpty(scanner, information, repeated);
+                    if (input == null) return null;
+                }
+            }
+            while (i == 5) {//email further checking
+                Pattern pattern = Pattern.compile("^\\w+([-+.]\\w+)*@\\w+([-.]\\w+)*\\.\\w+([-.]\\w+)*$");
+                if (pattern.matcher(input).matches()){
+                    break;
+                }else {
+                    System.out.println("Invalid input. Email could does not includes special characters and space.");
+                    input = verifyEmpty(scanner, information, repeated);
+                    if (input == null) return null;
+                }
             }
             personalInfo[i] = input;
         }
         return personalInfo;
+    }
+
+    private static String verifyEmpty(Scanner scanner, String information, String repeated) {
+        String input;
+        input = scanner.nextLine().trim();
+        while (input.isEmpty()) {
+            System.out.println("===========================================================");
+            System.out.print(repeated + "a valid information of " + information);
+            input = scanner.nextLine().trim();
+            if (input.equalsIgnoreCase("Return")) {
+                return null;
+            }
+        }
+        if (input.equalsIgnoreCase("Return")) {
+            return null;
+        }
+        return input;
     }
 
     public static byte update() {
@@ -303,12 +345,9 @@ public class Guest {
                 int userID = resultSet.getInt("userID");
 
                 connection.setAutoCommit(false);        //Start transaction
-                System.out.println("1. " + attributes.get("1"));
-                System.out.println("2. " + attributes.get("2"));
-                System.out.println("3. " + attributes.get("3"));
-                System.out.println("4. " + attributes.get("4"));
-                System.out.println("5. " + attributes.get("5"));
-                System.out.println("6. " + attributes.get("6"));
+                for (int i=1;i<=attributes.size();i++) {
+                    System.out.println((i)+". " + attributes.get(String.valueOf(i)));
+                }
                 System.out.println("7. Cancel All Updates and Return");
                 System.out.println("8. Save and Return to previous page");
                 System.out.println("9. quit the system (Not record your changes)");
