@@ -1,19 +1,17 @@
+import utils.Booking;
 import utils.DB_Utility;
 import utils.Guest;
 import utils.Staff;
 
-import java.time.LocalDateTime;
-import java.time.format.DateTimeFormatter;
 import java.util.Scanner;
 
 public class HMS {
-    private HMS() {
-    }
+//    private HMS() {
+//    }
 
     public static void main(String[] args) {
 
         try {
-//            connection = DB_Connection.connect();
 
             System.out.println("                                 *-------------------------------------*");
             System.out.println("                                 *     Welcome to use this system!     *");
@@ -33,50 +31,89 @@ public class HMS {
 
     private static void processing() throws Exception {
         byte step = welcome();
-        int loginPerson;
+        int[] userInformation;
+        int ID = 0;
         while (true) {
-            if (step == -1) {
-                System.out.println();
-                break;
-            }
-
-            if (step == 0) {
-                step = welcome();
-            }
-
-            //Dispose the information of the first step
-            if (step == 1) {//--------------------------------Guest Mode selected
-                System.out.println();
-                step = Guest.startInterface();
-            } else if (step == 2) {//-------------------------Staff Mode selected
-                System.out.println();
-                step = Staff.startInterface();
-            }
-
-            //Dispose the information of the second step
-            //Feedback from Guest Mode
-            if (step == 3) {//--------------------------------Guest Login selected
-                System.out.println();
-                int[] userInformation = Guest.login();
-                step = (byte) userInformation[0];
-                loginPerson = userInformation[1];//Get the login person
-            } else if (step == 4) {//-------------------------Guest Sign Up selected
-                System.out.println();
-                step = Guest.register();
-            } else if (step == 5) {//-------------------------Update Personal Details selected
-                System.out.println();
-                step = Guest.update();
-            } else if (step == 6) {//-------------------------Go back to previous page
-                System.out.println();
-                step = 0;
-            }
-
-            //Feedback from Staff Mode
-            if (step == 6) {//--------------------------------Staff Login selected
-                step = Staff.login();
-            } else if (step == 7) {//-------------------------Go back to previous page
-                System.out.println();
-                step = 0;
+            switch (step) {
+                case -1:
+                    System.out.println();
+                    return;
+                case 0:
+                    step = welcome();
+                    break;
+                //Dispose the information of the first step
+                case 1://--------------------------------------Guest Mode selected
+                    System.out.println();
+                    step = Guest.startInterface();
+                    break;
+                case 2://--------------------------------------Staff Mode selected
+                    System.out.println();
+                    step = Staff.startInterface();
+                    break;
+                //Dispose the information of the second step
+                //Feedback from Guest Mode
+                case 3://--------------------------------------Guest Login selected
+                    System.out.println();
+                    userInformation = Guest.login();
+                    step = (byte) userInformation[0];
+                    ID = userInformation[1];//Get the login person
+                    break;
+                case 4://--------------------------------------Guest Sign Up selected
+                    System.out.println();
+                    step = Guest.register();
+                    break;
+                case 5://--------------------------------------Update Personal Details selected
+                    System.out.println();
+                    step = Guest.update();
+                    break;
+                case 6://--------------------------------------Go back to previous page
+                case 8://--------------------------------------Go back to previous page
+                    System.out.println();
+                    step = 0;
+                    break;
+                case 7://--------------------------------------Staff Login selected
+                    System.out.println();
+                    userInformation = Staff.login();
+                    step = (byte) userInformation[0];
+                    ID = userInformation[1];//Get the login person
+                    break;
+                //Dispose the information of the third step
+                case 9:
+                    System.out.println();
+                    userInformation = Booking.startInterface(ID);
+                    step = (byte) userInformation[0];
+                    ID = userInformation[1];
+                    break;
+                case 10:
+                    System.out.println();
+                    userInformation = Booking.bookRooms(ID);
+                    step = (byte) userInformation[0];
+                    ID = userInformation[1];
+                    break;
+                case 11:
+                    System.out.println();
+                    userInformation = Booking.cancelRooms(ID);
+                    step = (byte) userInformation[0];
+                    ID = userInformation[1];
+                    break;
+                case 12:
+                    System.out.println();
+                    userInformation = Booking.bookMeal(ID);
+                    step = (byte) userInformation[0];
+                    ID = userInformation[1];
+                    break;
+                case 13:
+                    System.out.println();
+                    userInformation = Booking.cancelMeal(ID);
+                    step = (byte) userInformation[0];
+                    ID = userInformation[1];
+                    break;
+                case 14:
+                    System.out.println();
+                    userInformation = Booking.update(ID);
+                    step = (byte) userInformation[0];
+                    ID = userInformation[1];
+                    break;
             }
         }
     }
@@ -94,11 +131,9 @@ public class HMS {
                 case "1":
                 case "guest mode":
                     return 1;                   //Selected Guest Mode, return 1.
-
                 case "2":
                 case "staff mode":
                     return 2;                   //Selected Staff Mode, return 2.
-
                 case "3":
                 case "quit the system":
                     return -1;

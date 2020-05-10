@@ -1,5 +1,9 @@
 package utils;
 
+import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.util.Map;
 import java.util.Scanner;
 
 public class Staff {
@@ -21,11 +25,10 @@ public class Staff {
             switch (input) {
                 case "1":
                 case "staff login":
-                    System.out.println();
-                    return 6;
+                    return 7;
                 case "2":
                 case "back to the previous options":
-                    return 7;
+                    return 8;
                 case "3":
                 case "quit the system":
                     return -1;
@@ -39,8 +42,37 @@ public class Staff {
         }
     }
 
-    public static byte login() throws Exception {
-        return 0;
+    public static int[] login() throws Exception {
+        int[] ints = {2, 0};
+        Map<String, String> userLoginInfo = Guest.verify();
+        if (userLoginInfo == null) {
+            return ints;
+        }
+        String username = userLoginInfo.get("username");
+        String password = userLoginInfo.get("password");
+
+        boolean result = false;
+
+        Connection connection = DB_Utility.connect();
+
+        String sql = "SELECT staffID FROM Staff WHERE username = ? AND password = ?";
+        PreparedStatement preparedStatement = connection.prepareStatement(sql);
+        preparedStatement.setString(1, username);
+        preparedStatement.setString(2, password);
+        ResultSet resultSet = preparedStatement.executeQuery();
+
+        if (resultSet.next()) {
+            result = true;
+            ints[1] = resultSet.getInt("staffID");
+        }
+
+        System.out.println("---------------------------------------------------------");
+        System.out.println(result ? "Welcome back! " + username : "Login failed. Please input correct username and password.");
+        System.out.println("---------------------------------------------------------");
+
+        DB_Utility.close(connection, preparedStatement, resultSet);
+
+        return ints;
     }
 
 }

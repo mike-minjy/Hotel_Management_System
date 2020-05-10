@@ -1,7 +1,9 @@
 package utils;
 
 import java.math.BigDecimal;
-import java.sql.*;
+import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Scanner;
@@ -43,7 +45,7 @@ public class Guest {
                     return -1;
                 default:
                     System.out.println();
-                    System.out.println("===================================================================================");
+                    System.out.println("=================================================================================================");
                     System.out.println("(Now in: Guest Mode)");
                     System.out.print("Please type in a valid number(1 for Login, 2 for Register, 3 for update, 4 for back, 5 for quit): ");
                     input = scanner.nextLine().trim().toLowerCase();
@@ -53,9 +55,10 @@ public class Guest {
     }
 
     public static int[] login() {
-        int[] ints = {1, 0};
+        int[] ints = {9, 0};
         Map<String, String> userLoginInfo = verify();
         if (userLoginInfo == null) {
+            ints[0] = 1;
             return ints;
         }
         String username = userLoginInfo.get("username");
@@ -77,11 +80,14 @@ public class Guest {
 
             if (resultSet.next()) {
                 result = true;
+                ints[1] = resultSet.getInt("userID");
+            } else {
+                ints[0] = 1;
             }
-            System.out.println("---------------------------");
-            System.out.println(result ? "Welcome back! " + username : "Login failed.");
-            System.out.println("---------------------------");
-            ints[1] = resultSet.getInt("userID");
+            System.out.println();
+            System.out.println("--------------------------------------------------------------------------------");
+            System.out.println(result ? "Welcome back! " + username : "Login failed. Please register at first or type in correct username and password.");
+            System.out.println("--------------------------------------------------------------------------------");
         } catch (Exception e) {
             e.printStackTrace();
 //            if (e.getMessage() != null) {
@@ -94,7 +100,7 @@ public class Guest {
         return ints;
     }
 
-    private static Map<String, String> verify() {
+    protected static Map<String, String> verify() {
         DB_Utility.printCurrentTime();
         Scanner scanner = new Scanner(System.in);
         String username = "", password = "";
@@ -178,7 +184,7 @@ public class Guest {
         System.out.println(repeated + "your personal information: ");
         System.out.println("1.Username, 2.Password, 3. Your Real Name, 4. Your passport ID, 5. Your Phone Number, 6. Email (Optional)");
         System.out.println("Type in \"Return\" to cancel the Sign up process.");
-        System.out.println("You cannot use \"Return\" as your information.");
+        System.out.println("You cannot only use an entire string \"Return\" as your information.");
 
         for (int i = 0; i < personalInfo.length; i++) {
             switch (i) {
@@ -237,41 +243,41 @@ public class Guest {
                     break;
                 } else {
                     System.out.println("============================================================");
-                    System.out.println("Invalid input. Name could only includes character and space.");
+                    System.out.print("Invalid input. Name could only includes character and space: ");
                     input = verifyEmpty(scanner, information, repeated);
                     if (input == null) return null;
                 }
             }
-            while (i == 3 && input.length() > 9) {//passport ID further checking
-                Pattern pattern = Pattern.compile("^[A-Z0-9]+$");
+            while (i == 3) {//passport ID further checking
+                Pattern pattern = Pattern.compile("^[A-Z0-9]{1,9}$");
                 if (pattern.matcher(input).matches()) {
                     break;
                 } else {
-                    System.out.println("============================================================");
-                    System.out.println("Invalid input. The standard passport ID length is not longer than 9 bits including digits or UPPERCASE chars.");
+                    System.out.println("=============================================================================================================");
+                    System.out.print("Invalid input. The standard passport ID length is not longer than 9 bits including digits or UPPERCASE chars: ");
                     input = verifyEmpty(scanner, information, repeated);
                     if (input == null) return null;
+                    input = input.toUpperCase();//Automatically change to uppercase without user specify it.
                 }
             }
             while (i == 4) {//phone number further checking
-                Pattern pattern = Pattern.compile("^[0-9]*$");
+                Pattern pattern = Pattern.compile("^[0-9]{1,18}$");
                 if (pattern.matcher(input).matches()) {
                     break;
                 } else {
                     System.out.println("=======================================================");
-                    System.out.println("Invalid input. Phone Number could only includes digits.");
+                    System.out.print("Invalid input. Phone Number could only includes digits: ");
                     input = verifyEmpty(scanner, information, repeated);
                     if (input == null) return null;
-                    input = input.toUpperCase();
                 }
             }
             while (i == 5) {//email further checking
                 Pattern pattern = Pattern.compile("^\\w+([-+.]\\w+)*@\\w+([-.]\\w+)*\\.\\w+([-.]\\w+)*$");
-                if (pattern.matcher(input).matches()) {
+                if (pattern.matcher(input).matches() || input.isEmpty()) {
                     break;
                 } else {
-                    System.out.println("==========================================================================");
-                    System.out.println("Invalid input. Email could does not includes special characters and space.");
+                    System.out.println("==============================================");
+                    System.out.print("Invalid input. Your Email format is incorrect: ");
                     input = verifyEmpty(scanner, information, repeated);
                     if (input == null) return null;
                 }
@@ -285,9 +291,12 @@ public class Guest {
         String input;
         input = scanner.nextLine().trim();
         while (input.isEmpty()) {
-            System.out.println("===========================================================");
+            System.out.println("==================================================================");
             System.out.print(repeated + "a valid information of " + information);
             input = scanner.nextLine().trim();
+            if (input.isEmpty() && information.equals("your Email (Optional, click [Enter] to skip it): ")) {
+                return input;
+            }
             if (input.equalsIgnoreCase("Return")) {
                 return null;
             }
@@ -298,31 +307,32 @@ public class Guest {
         return input;
     }
 
+    //It is more reasonable to be accessible after user login his/her account
+    //But I can create another update(int ID) method to implement the information changes after login
     public static byte update() {//It is also possible to use regular expression to verify the information.
         Map<String, String> loginVerification = verify();
-        if (loginVerification == null) {//It is more reasonable to be accessible after user login his/her account
+        if (loginVerification == null) {
             return 1;
         }
         String username = loginVerification.get("username");
         String password = loginVerification.get("password");
         Scanner scanner = new Scanner(System.in);
-        String changeInfo = "", input = "", sql = "";
-        boolean result;
+        String repeated = "Please type in ";
+        byte normalReturn = 1;
         Connection connection = null;
         PreparedStatement preparedStatement = null;
         ResultSet resultSet = null;
         try {
             connection = DB_Utility.connect();
 
-//            System.out.println("You can use front digit or type in the string of that type to choose it.");
-            sql = "SELECT userID,username,password,realName AS 'Real Name',passportID AS 'Passport ID',telephoneNumber AS 'Phone Number',email FROM Guest WHERE username = ? AND password = ?";
+//            System.out.println("You can use front digit or type in the string of that information you want to modify.");
+            String sql = "SELECT userID,username,password,realName AS 'Real Name',passportID AS 'Passport ID',telephoneNumber AS 'Phone Number',email FROM Guest WHERE username = ? AND password = ?";
             preparedStatement = connection.prepareStatement(sql, ResultSet.TYPE_SCROLL_INSENSITIVE, ResultSet.CONCUR_UPDATABLE);
             preparedStatement.setString(1, username);
             preparedStatement.setString(2, password);
             resultSet = preparedStatement.executeQuery();
 
             if (resultSet.next()) {
-                result = true;
                 System.out.println();
                 System.out.println("-------------------------------------------------------------------");
                 System.out.println("Verification succeed! You can change your personal information now.");
@@ -332,121 +342,12 @@ public class Guest {
                 System.out.println();
                 System.out.println("=====================================================================");
                 System.out.println("Verification failed. Please type in the correct username or password.");
-                System.out.println("Programme returned to the previous page.");
+                System.out.println("Program returned to the previous page.");
                 System.out.println("=====================================================================");
                 return 1;
             }
 
-            Map<String, String> attributes = new HashMap<>();
-            attributes.put("1", "Username");
-            attributes.put("2", "Password");
-            attributes.put("3", "Real Name");
-            attributes.put("4", "Passport ID");
-            attributes.put("5", "Phone Number");
-            attributes.put("6", "Email");
-
-            loopFlag:
-            while (result) {
-                System.out.println("Your latest information listed as below: ");
-                System.out.println("-----------------------------------------------------");
-                resultSet.first();
-                for (int i = 2; i <= resultSet.getMetaData().getColumnCount(); i++) {
-                    System.out.println("Your " + resultSet.getMetaData().getColumnLabel(i) + ": " + resultSet.getString(i));
-                }
-                System.out.println("-----------------------------------------------------");
-
-                int userID = resultSet.getInt("userID");
-
-                connection.setAutoCommit(false);        //Start transaction
-                for (int i = 1; i <= attributes.size(); i++) {
-                    System.out.println((i) + ". " + attributes.get(String.valueOf(i)));
-                }
-                System.out.println("7. Cancel All Updates and Return");
-                System.out.println("8. Save and Return to previous page");
-                System.out.println("9. quit the system (Not record your changes)");
-                System.out.println();
-                System.out.println("(Now in: Guest Information Alteration Mode)");
-                System.out.print("Please type in your choice: ");
-                changeInfo = scanner.nextLine().trim().toLowerCase();
-                switch (changeInfo) {
-                    case "1":
-                    case "username":
-                        sql = "UPDATE Guest SET username = ? WHERE userID = ?";
-                        System.out.print("Please type in your new Username: ");
-                        break;
-                    case "2":
-                    case "password":
-                        sql = "UPDATE Guest SET password = ? WHERE userID = ?";
-                        System.out.print("Please type in your new Password: ");
-                        break;
-                    case "3":
-                    case "real name"://Checking is still developing
-                        sql = "UPDATE Guest SET realName = ? WHERE userID = ?";
-                        System.out.print("Please type in your new Real Name: ");
-                        break;
-                    case "4":
-                    case "passport id"://Checking is still developing
-                        sql = "UPDATE Guest SET passportID = ? WHERE userID = ?";
-                        System.out.print("Please type in your new Passport ID: ");
-                        break;
-                    case "5":
-                    case "phone number"://Checking is still developing
-                        sql = "UPDATE Guest SET telephoneNumber = ? WHERE userID = ?";
-                        System.out.print("Please type in your new Phone Number: ");
-                        break;
-                    case "6":
-                    case "email"://Checking is still developing
-                        sql = "UPDATE Guest SET email = ? WHERE userID = ?";
-                        System.out.print("Please type in your new Email: ");
-                        break;
-                    case "7":
-                    case "cancel all updates and return":
-                        connection.rollback();
-                        System.out.println("All information has been reset to initial contents!");
-                        return 1;
-                    case "8":
-                    case "save and return to previous page":
-                        connection.commit();
-                        DB_Utility.close(connection, preparedStatement, resultSet);
-                        return 1;
-                    case "9":
-                    case "quit the system":
-                        connection.rollback();
-                        DB_Utility.close(connection, preparedStatement, resultSet);
-                        return -1;
-                    default:
-                        System.out.println();
-                        System.out.println("===========================================================================");
-                        System.out.println("Please type in the corresponding number or full text to choose your option.");
-                        System.out.println("===========================================================================");
-                        System.out.println();
-                        continue loopFlag;
-                }
-                input = scanner.nextLine().trim();
-                //Further checking same as register, still need enhancement
-                while (input.equals("") && !(changeInfo.equals("6") || changeInfo.equals("email"))) {
-                    System.out.println("This information cannot be empty!");
-                    if (changeInfo.length() != 1) {
-                        System.out.print("Please type in the valid content of " + changeInfo + ": ");
-                    } else {
-                        System.out.print("Please type in the valid content of " + attributes.get(changeInfo) + ": ");
-                    }
-                    input = scanner.nextLine().trim();
-                }
-                preparedStatement = connection.prepareStatement(sql, ResultSet.TYPE_SCROLL_INSENSITIVE, ResultSet.CONCUR_UPDATABLE);
-                preparedStatement.setString(1, input);
-                preparedStatement.setInt(2, userID);
-                preparedStatement.executeUpdate();
-
-                System.out.println("-------------------");
-                System.out.println("Alteration succeed!");
-                System.out.println("-------------------");
-                sql = "SELECT userID,username,password,realName AS 'Real Name',passportID AS 'Passport ID',telephoneNumber AS 'Phone Number',email FROM Guest WHERE userID = ?";
-                preparedStatement = connection.prepareStatement(sql, ResultSet.TYPE_SCROLL_INSENSITIVE, ResultSet.CONCUR_UPDATABLE);
-                preparedStatement.setInt(1, userID);
-                resultSet = preparedStatement.executeQuery();
-            }
-            System.out.println();
+            normalReturn = sharedUpdate(repeated, scanner, connection, preparedStatement, resultSet);
         } catch (Exception e) {
             if (connection != null) {
                 try {
@@ -461,11 +362,205 @@ public class Guest {
         } finally {
             DB_Utility.close(connection, preparedStatement, resultSet);
         }
-        return 1;
+        return normalReturn;
+    }
+
+    protected static byte sharedUpdate(String repeated, Scanner scanner, Connection connection, PreparedStatement preparedStatement, ResultSet resultSet) throws Exception {
+        String sql, changeInfo, input;
+        Map<String, String> attributes = new HashMap<>();
+        attributes.put("1", "Username");
+        attributes.put("2", "Password");
+        attributes.put("3", "Real Name");
+        attributes.put("4", "Passport ID");
+        attributes.put("5", "Phone Number");
+        attributes.put("6", "Email");
+
+        loopFlag:
+        while (true) {
+            System.out.println("Your latest information listed as below: ");
+            System.out.println("-----------------------------------------------------");
+            resultSet.first();
+            for (int i = 2; i <= resultSet.getMetaData().getColumnCount(); i++) {
+                System.out.println("Your " + resultSet.getMetaData().getColumnLabel(i) + ": " + resultSet.getString(i));
+            }
+            System.out.println("-----------------------------------------------------");
+
+            int userID = resultSet.getInt("userID");
+
+            connection.setAutoCommit(false);        //Start transaction
+            for (int i = 1; i <= attributes.size(); i++) {
+                System.out.println((i) + ". " + attributes.get(String.valueOf(i)));
+            }
+            System.out.println("7. Cancel All Updates and Return");
+            System.out.println("8. Save and Return to previous page");
+            System.out.println("9. quit the system (Not record your changes)");
+            System.out.println();
+            System.out.println("(Now in: Guest Information Alteration Mode)");
+            System.out.print("Please type in your choice: ");
+            changeInfo = scanner.nextLine().trim().toLowerCase();
+            switch (changeInfo) {
+                case "1":
+                case "username"://Checking is still developing
+                    sql = "UPDATE Guest SET username = ? WHERE userID = ?";
+                    System.out.print(repeated + "your new Username: ");
+                    break;
+                case "2":
+                case "password":
+                    sql = "UPDATE Guest SET password = ? WHERE userID = ?";
+                    System.out.print(repeated + "your new Password: ");
+                    break;
+                case "3":
+                case "real name"://Checking is still developing
+                    sql = "UPDATE Guest SET realName = ? WHERE userID = ?";
+                    System.out.print(repeated + "your new Real Name: ");
+                    break;
+                case "4":
+                case "passport id"://Checking is still developing
+                    sql = "UPDATE Guest SET passportID = ? WHERE userID = ?";
+                    System.out.print(repeated + "your new Passport ID: ");
+                    break;
+                case "5":
+                case "phone number"://Checking is still developing
+                    sql = "UPDATE Guest SET telephoneNumber = ? WHERE userID = ?";
+                    System.out.print(repeated + "your new Phone Number: ");
+                    break;
+                case "6":
+                case "email"://Checking is still developing
+                    sql = "UPDATE Guest SET email = ? WHERE userID = ?";
+                    System.out.print(repeated + "your new Email: ");
+                    break;
+                case "7":
+                case "cancel all updates and return":
+                    connection.rollback();
+                    System.out.println("All information has been reset to initial contents!");
+                    return 1;
+                case "8":
+                case "save and return to previous page":
+                    connection.commit();
+                    System.out.println("All changed information has been saved!");
+                    DB_Utility.close(connection, preparedStatement, resultSet);
+                    return 1;
+                case "9":
+                case "quit the system":
+                    connection.rollback();
+                    DB_Utility.close(connection, preparedStatement, resultSet);
+                    return -1;
+                default:
+                    System.out.println();
+                    System.out.println("===========================================================================");
+                    System.out.println("Please type in the corresponding number or full text to choose your option.");
+                    System.out.println("===========================================================================");
+                    System.out.println();
+                    continue loopFlag;
+            }
+            input = scanner.nextLine().trim();
+            //Further checking same as register, still need improvement
+            while (input.equals("") && !(changeInfo.equals("6") || changeInfo.equals("email"))) {
+                System.out.println("This information cannot be empty!");
+                if (changeInfo.length() != 1) {
+                    System.out.print(repeated + "the valid content of " + changeInfo + ": ");
+                } else {
+                    System.out.print(repeated + "the valid content of " + attributes.get(changeInfo) + ": ");
+                }
+                input = scanner.nextLine().trim();
+            }
+            if (changeInfo.equals("4") || changeInfo.equals("passport id")) {
+                input = input.toUpperCase();//Automatically change characters to uppercase
+            }
+            while (changeInfo.equals("1") || changeInfo.equals("username")) {//Username further checking
+                boolean check = checkUsername(input);
+                if (!check) {
+                    break;
+                }
+                System.out.println("===========================================================");
+                System.out.print("This username has already exist, please choose another one: ");
+                input = verifyEmpty(scanner, "your new Username", repeated);
+                while (input == null) {
+                    System.out.println("=========================");
+                    System.out.println("You cannot return at here");
+                    input = verifyEmpty(scanner, "your new Username", repeated);
+                }
+            }
+            while (changeInfo.equals("3") || changeInfo.equals("real name")) {//real name further checking
+                Pattern pattern = Pattern.compile("^[[A-Za-z]|\\s]+$");
+                if (pattern.matcher(input).matches()) {
+                    break;
+                } else {
+                    System.out.println("=============================================================");
+                    System.out.print("Invalid input. Name could only includes characters and space: ");
+                    input = verifyEmpty(scanner, "your Real Name", repeated);
+                    while (input == null) {
+                        System.out.println("===============================================================================================");
+                        System.out.print("You cannot return at here, you can update your information here and cancel it in previous page: ");
+                        input = verifyEmpty(scanner, "your Real Name", repeated);
+                    }
+                }
+            }
+            while ((changeInfo.equals("4") || changeInfo.equals("passport id"))) {//passport ID further checking
+                Pattern pattern = Pattern.compile("^[A-Z0-9]{1,9}$");
+                if (pattern.matcher(input).matches()) {
+                    break;
+                } else {
+                    System.out.println("=============================================================================================================");
+                    System.out.print("Invalid input. The standard passport ID length is not longer than 9 bits including digits or UPPERCASE chars: ");
+                    input = verifyEmpty(scanner, "your Passport ID", repeated);
+                    while (input == null) {
+                        System.out.println("===============================================================================================");
+                        System.out.print("You cannot return at here, you can update your information here and cancel it in previous page: ");
+                        input = verifyEmpty(scanner, "your Passport ID", repeated);
+                    }
+                    input = input.toUpperCase();
+                }
+            }
+            while (changeInfo.equals("5") || changeInfo.equals("phone number")) {//phone number further checking
+                Pattern pattern = Pattern.compile("^[0-9]{1,18}$");
+                if (pattern.matcher(input).matches()) {
+                    break;
+                } else {
+                    System.out.println("=======================================================");
+                    System.out.print("Invalid input. Phone Number could only includes digits: ");
+                    input = verifyEmpty(scanner, "your Phone Number", repeated);
+                    while (input == null) {
+                        System.out.println("===============================================================================================");
+                        System.out.print("You cannot return at here, you can update your information here and cancel it in previous page: ");
+                        input = verifyEmpty(scanner, "your Phone Number", repeated);
+                    }
+                }
+            }
+            while (changeInfo.equals("6") || changeInfo.equals("email")) {//email further checking
+                Pattern pattern = Pattern.compile("^\\w+([-+.]\\w+)*@\\w+([-.]\\w+)*\\.\\w+([-.]\\w+)*$");
+                if (pattern.matcher(input).matches() || input.isEmpty()) {
+                    break;
+                } else {
+                    System.out.println("==============================================");
+                    System.out.print("Invalid input. Your Email format is incorrect: ");
+                    input = verifyEmpty(scanner, "your Email", repeated);
+                    while (input == null) {
+                        System.out.println("===============================================================================================");
+                        System.out.print("You cannot return at here, you can update your information here and cancel it in previous page: ");
+                        input = verifyEmpty(scanner, "your Email", repeated);
+                    }
+                }
+            }
+            preparedStatement = connection.prepareStatement(sql, ResultSet.TYPE_SCROLL_INSENSITIVE, ResultSet.CONCUR_UPDATABLE);
+            preparedStatement.setString(1, input);
+            preparedStatement.setInt(2, userID);
+            preparedStatement.executeUpdate();
+
+            System.out.println();
+            System.out.println("-------------------");
+            System.out.println("Alteration succeed!");
+            System.out.println("-------------------");
+            System.out.println();
+
+            sql = "SELECT userID,username,password,realName AS 'Real Name',passportID AS 'Passport ID',telephoneNumber AS 'Phone Number',email FROM Guest WHERE userID = ?";
+            preparedStatement = connection.prepareStatement(sql, ResultSet.TYPE_SCROLL_INSENSITIVE, ResultSet.CONCUR_UPDATABLE);
+            preparedStatement.setInt(1, userID);
+            resultSet = preparedStatement.executeQuery();
+        }
     }
 
     private static boolean checkUsername(String input) {
-        String username = input;
 
         Connection connection = null;
         PreparedStatement preparedStatement = null;
@@ -477,7 +572,7 @@ public class Guest {
 
             String sql = "SELECT userID FROM Guest WHERE username = ?";
             preparedStatement = connection.prepareStatement(sql);
-            preparedStatement.setString(1, username);
+            preparedStatement.setString(1, input);
             resultSet = preparedStatement.executeQuery();
 
             if (resultSet.next()) {

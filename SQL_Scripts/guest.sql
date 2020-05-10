@@ -1,2 +1,0 @@
-INSERT INTO `guest`(`userID`, `username`, `password`, `realName`, `passportID`, `telephoneNumber`, `email`, `operationTime`) VALUES (2, 'mika', '12345', 'mmm', 'ER102897', 222555666, '2579583@student.xjtlu.edu.cn', '2020-05-04 22:12:48');
-INSERT INTO `guest`(`userID`, `username`, `password`, `realName`, `passportID`, `telephoneNumber`, `email`, `operationTime`) VALUES (3, 'trigger', '123', 'mike-minjy', 'ER1252363', 18972634381, '26839586@qq.com', '2020-05-05 02:19:46');

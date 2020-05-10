@@ -29,11 +29,11 @@ public class DB_Utility {
      * give a current time feedback to user
      */
     public static void printCurrentTime() {
-        System.out.println("***************************************");
+        System.out.println("************************************");
         LocalDateTime currentTime = LocalDateTime.now();
         DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
-        System.out.println("The current time is " + currentTime.format(formatter));
-        System.out.println("***************************************");
+        System.out.println("Current time --> " + currentTime.format(formatter));
+        System.out.println("************************************");
     }
 
     /**
