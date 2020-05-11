@@ -11,7 +11,7 @@
  Target Server Version : 80019
  File Encoding         : 65001
 
- Date: 11/05/2020 04:48:19
+ Date: 12/05/2020 04:57:37
 */
 
 SET NAMES utf8mb4;
@@ -22,16 +22,18 @@ SET FOREIGN_KEY_CHECKS = 0;
 -- ----------------------------
 DROP TABLE IF EXISTS `bookedmeal`;
 CREATE TABLE `bookedmeal`  (
-  `userID` int(0) UNSIGNED NOT NULL,
+  `bookedMeal_ID` int(0) UNSIGNED NOT NULL AUTO_INCREMENT,
+  `bookedRoom_ID` int(0) UNSIGNED NOT NULL,
   `chefID` tinyint(0) UNSIGNED NOT NULL,
   `dishes` varchar(60) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NOT NULL,
   `orderDate` datetime(0) NOT NULL,
   `serveDate` datetime(0) NOT NULL,
+  PRIMARY KEY (`bookedMeal_ID`) USING BTREE,
   INDEX `fk_BookedMeal_Chef`(`chefID`) USING BTREE,
-  INDEX `fk_BookedMeal_Guest`(`userID`) USING BTREE,
   INDEX `fk_BookedMeal_Meal`(`dishes`) USING BTREE,
+  INDEX `fk_BookedMeal_BookedRoom`(`bookedRoom_ID`) USING BTREE,
+  CONSTRAINT `fk_BookedMeal_BookedRoom` FOREIGN KEY (`bookedRoom_ID`) REFERENCES `bookedroom` (`bookedRoom_ID`) ON DELETE RESTRICT ON UPDATE RESTRICT,
   CONSTRAINT `fk_BookedMeal_Chef` FOREIGN KEY (`chefID`) REFERENCES `chef` (`chefID`) ON DELETE RESTRICT ON UPDATE RESTRICT,
-  CONSTRAINT `fk_BookedMeal_Guest` FOREIGN KEY (`userID`) REFERENCES `guest` (`userID`) ON DELETE RESTRICT ON UPDATE RESTRICT,
   CONSTRAINT `fk_BookedMeal_Meal` FOREIGN KEY (`dishes`) REFERENCES `meal` (`dishes`) ON DELETE RESTRICT ON UPDATE RESTRICT
 ) ENGINE = InnoDB CHARACTER SET = utf8mb4 COLLATE = utf8mb4_0900_ai_ci ROW_FORMAT = Dynamic;
 
@@ -44,11 +46,13 @@ CREATE TABLE `bookedmeal`  (
 -- ----------------------------
 DROP TABLE IF EXISTS `bookedroom`;
 CREATE TABLE `bookedroom`  (
+  `bookedRoom_ID` int(0) UNSIGNED NOT NULL AUTO_INCREMENT,
   `userID` int(0) UNSIGNED NOT NULL,
   `roomID` int(0) UNSIGNED NOT NULL,
   `checkInDate` date NOT NULL,
   `checkOutDate` date NOT NULL,
   `operationTime` timestamp(0) NOT NULL ON UPDATE CURRENT_TIMESTAMP(0),
+  PRIMARY KEY (`bookedRoom_ID`) USING BTREE,
   INDEX `fk_BookedRoom_Guest`(`userID`) USING BTREE,
   INDEX `fk_BookedRoom_Room`(`roomID`) USING BTREE,
   CONSTRAINT `fk_BookedRoom_Guest` FOREIGN KEY (`userID`) REFERENCES `guest` (`userID`) ON DELETE RESTRICT ON UPDATE RESTRICT,
@@ -58,13 +62,16 @@ CREATE TABLE `bookedroom`  (
 -- ----------------------------
 -- Records of bookedroom
 -- ----------------------------
-INSERT INTO `bookedroom` VALUES (2, 113, '2020-05-16', '2020-05-18', '2020-05-13 03:38:40');
-INSERT INTO `bookedroom` VALUES (3, 210, '2020-05-06', '2020-05-22', '2020-05-05 12:38:51');
-INSERT INTO `bookedroom` VALUES (4, 707, '2020-04-23', '2020-05-19', '2020-04-09 15:38:59');
-INSERT INTO `bookedroom` VALUES (5, 906, '2020-05-06', '2020-05-13', '2020-05-03 11:39:17');
-INSERT INTO `bookedroom` VALUES (2, 906, '2020-02-06', '2020-03-12', '2020-02-03 08:28:31');
-INSERT INTO `bookedroom` VALUES (2, 505, '2020-03-20', '2020-04-16', '2020-03-10 18:40:03');
-INSERT INTO `bookedroom` VALUES (7, 701, '2020-05-11', '2020-05-11', '2020-05-11 11:43:35');
+INSERT INTO `bookedroom` VALUES (1, 2, 113, '2020-05-16', '2020-05-18', '2020-05-13 03:38:40');
+INSERT INTO `bookedroom` VALUES (2, 3, 210, '2020-05-06', '2020-05-22', '2020-05-05 12:38:51');
+INSERT INTO `bookedroom` VALUES (3, 4, 707, '2020-04-23', '2020-05-19', '2020-04-09 15:38:59');
+INSERT INTO `bookedroom` VALUES (4, 5, 906, '2020-05-06', '2020-05-13', '2020-05-03 11:39:17');
+INSERT INTO `bookedroom` VALUES (5, 2, 906, '2020-02-06', '2020-03-12', '2020-02-03 08:28:31');
+INSERT INTO `bookedroom` VALUES (6, 2, 505, '2020-03-20', '2020-04-16', '2020-03-10 18:40:03');
+INSERT INTO `bookedroom` VALUES (7, 7, 701, '2020-05-11', '2020-05-11', '2020-05-11 11:43:35');
+INSERT INTO `bookedroom` VALUES (8, 8, 313, '2020-05-11', '2020-05-11', '2020-05-11 23:58:38');
+INSERT INTO `bookedroom` VALUES (9, 9, 113, '2020-05-12', '2020-05-12', '2020-05-12 11:49:13');
+INSERT INTO `bookedroom` VALUES (10, 6, 804, '2020-05-12', '2020-05-12', '2020-05-12 15:36:31');
 
 -- ----------------------------
 -- Table structure for chef
@@ -74,7 +81,7 @@ CREATE TABLE `chef`  (
   `chefID` tinyint(0) UNSIGNED NOT NULL AUTO_INCREMENT,
   `chefName` varchar(20) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NOT NULL,
   PRIMARY KEY (`chefID`) USING BTREE
-) ENGINE = InnoDB AUTO_INCREMENT = 5 CHARACTER SET = utf8mb4 COLLATE = utf8mb4_0900_ai_ci ROW_FORMAT = Dynamic;
+) ENGINE = InnoDB AUTO_INCREMENT = 4 CHARACTER SET = utf8mb4 COLLATE = utf8mb4_0900_ai_ci ROW_FORMAT = Dynamic;
 
 -- ----------------------------
 -- Records of chef
@@ -99,7 +106,7 @@ CREATE TABLE `guest`  (
   `operationTime` timestamp(0) NOT NULL ON UPDATE CURRENT_TIMESTAMP(0),
   PRIMARY KEY (`userID`) USING BTREE,
   UNIQUE INDEX `username`(`username`) USING BTREE
-) ENGINE = InnoDB AUTO_INCREMENT = 6 CHARACTER SET = utf8mb4 COLLATE = utf8mb4_0900_ai_ci ROW_FORMAT = Dynamic;
+) ENGINE = InnoDB CHARACTER SET = utf8mb4 COLLATE = utf8mb4_0900_ai_ci ROW_FORMAT = Dynamic;
 
 -- ----------------------------
 -- Records of guest
@@ -108,10 +115,10 @@ INSERT INTO `guest` VALUES (2, 'mika', '12345', 'mmm', 'ER102897', 222555666, '2
 INSERT INTO `guest` VALUES (3, 'trigger', '123', 'mike-minjy', 'ER1252363', 18972634381, '26839586@qq.com', '2020-05-05 02:19:46');
 INSERT INTO `guest` VALUES (4, 'mikalon', '666', 'mika', 'QS553322', 59283098, '33322_dewd@mail.com', '2020-05-07 21:44:20');
 INSERT INTO `guest` VALUES (5, 'ayasaki', '23335', 'miuki', 'NS9365605', 1223366778, NULL, '2020-05-08 22:35:02');
-INSERT INTO `guest` VALUES (6, 'timi', '12356', 'smalion', 'WC33567', 123563216, NULL, '2020-05-11 03:50:03');
-INSERT INTO `guest` VALUES (7, 'minicap', '333666', 'mike simon', 'WCMM22233', 22222256, '2553755@123.com', '2020-05-11 03:58:55');
-INSERT INTO `guest` VALUES (8, 'muniku', '233366', 'mikunika', '444444', 12333321, NULL, '2020-05-11 03:59:54');
-INSERT INTO `guest` VALUES (9, 'ssscc', 'w2', 'minitab', 'WEVE332', 12389795, '', '2020-05-11 04:05:49');
+INSERT INTO `guest` VALUES (6, 'timi', '12356', 'smalion', 'WC33567', 123563216, NULL, '2020-05-11 12:50:03');
+INSERT INTO `guest` VALUES (7, 'minicap', '333666', 'mike simon', 'WCMM22233', 22222256, '2553755@123.com', '2020-05-11 14:58:55');
+INSERT INTO `guest` VALUES (8, 'muniku', '2333666', 'mikunika', 'EC233366', 12333321, '2333@qq.com', '2020-05-12 00:00:53');
+INSERT INTO `guest` VALUES (9, 'ssscc', 'w2', 'minitab', 'WEVE332', 12389795, '', '2020-05-11 11:05:49');
 
 -- ----------------------------
 -- Table structure for meal
@@ -311,7 +318,7 @@ CREATE TABLE `roomtype`  (
   `roomTypeID` tinyint(0) UNSIGNED NOT NULL AUTO_INCREMENT,
   `roomType` varchar(30) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NOT NULL,
   PRIMARY KEY (`roomTypeID`) USING BTREE
-) ENGINE = InnoDB AUTO_INCREMENT = 5 CHARACTER SET = utf8mb4 COLLATE = utf8mb4_0900_ai_ci ROW_FORMAT = Dynamic;
+) ENGINE = InnoDB AUTO_INCREMENT = 4 CHARACTER SET = utf8mb4 COLLATE = utf8mb4_0900_ai_ci ROW_FORMAT = Dynamic;
 
 -- ----------------------------
 -- Records of roomtype
@@ -363,7 +370,7 @@ CREATE TABLE `staff`  (
   `telephoneNumber` bigint(0) UNSIGNED NOT NULL,
   `operationTime` timestamp(0) NULL DEFAULT NULL ON UPDATE CURRENT_TIMESTAMP(0),
   PRIMARY KEY (`staffID`) USING BTREE
-) ENGINE = InnoDB AUTO_INCREMENT = 4 CHARACTER SET = utf8mb4 COLLATE = utf8mb4_0900_ai_ci ROW_FORMAT = Dynamic;
+) ENGINE = InnoDB AUTO_INCREMENT = 3 CHARACTER SET = utf8mb4 COLLATE = utf8mb4_0900_ai_ci ROW_FORMAT = Dynamic;
 
 -- ----------------------------
 -- Records of staff

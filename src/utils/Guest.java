@@ -176,7 +176,6 @@ public class Guest {
         DB_Utility.printCurrentTime();
         Scanner scanner = new Scanner(System.in);
         String[] personalInfo = new String[6];
-        boolean check = true;
         String information = "", input = "";
         String repeated = "Please type in ";
         System.out.println("This is the Guest Sign Up Mode.");
@@ -227,8 +226,8 @@ public class Guest {
                     return null;
                 }
             }
-            while (i == 0 && check) {//Username further checking
-                check = checkUsername(input);
+            while (i == 0) {//Username further checking
+                boolean check = checkUsername(input);
                 if (!check) {
                     break;
                 }
@@ -294,7 +293,7 @@ public class Guest {
             System.out.println("==================================================================");
             System.out.print(repeated + "a valid information of " + information);
             input = scanner.nextLine().trim();
-            if (input.isEmpty() && information.equals("your Email (Optional, click [Enter] to skip it): ")) {
+            if (input.isEmpty() && information.contains("Email")) {
                 return input;
             }
             if (input.equalsIgnoreCase("Return")) {

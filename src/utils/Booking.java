@@ -171,7 +171,9 @@ public class Booking {
             } else {
                 checkInDate = getValidDate(scanner, input, true);
             }
-            if (checkInDate == null) return userInfo;
+            if (checkInDate == null) {
+                return userInfo;
+            }
             System.out.println("Please type in when you want to leave the hotel (Click [Enter] to skip it)");
             System.out.print("(If you do not specify the date, system will set it as the same day of check-in date): ");
             input = scanner.nextLine().trim();
@@ -184,14 +186,16 @@ public class Booking {
                     if (checkOutDate == LocalDate.MIN) {
                         checkOutDate = checkInDate;
                         break;
-                    } else if (checkOutDate != null && !checkOutDate.isBefore(checkInDate)) {
+                    } else if (checkOutDate == null) {
+                        return userInfo;
+                    } else if (checkOutDate.isBefore(checkInDate)) {
                         System.out.println("==================================================================");
                         System.out.print("The check-out date should be equals to or after the check-in date: ");
                         input = scanner.nextLine().trim();
-                        continue;
+                    } else {
+                        break;
                     }
                 }
-                if (checkOutDate == null) return userInfo;
             }
             //End: Get date
             //Check rooms
@@ -230,6 +234,7 @@ public class Booking {
                             System.out.println("=================================");
                             System.out.println("Please type in an available room.");
                             System.out.println("=================================");
+                            //There is an issue about "living one day" guest, they cannot be split from available rooms.
                         }
                     }
                 }
@@ -383,8 +388,8 @@ public class Booking {
             System.out.println("--------*----------------");
         } catch (Exception e) {
             e.printStackTrace();
-        }finally {
-            DB_Utility.close(connection,preparedStatement,resultSet);
+        } finally {
+            DB_Utility.close(connection, preparedStatement, resultSet);
         }
     }
 
@@ -447,7 +452,7 @@ public class Booking {
         PreparedStatement preparedStatement = null;
         try {
             connection = DB_Utility.connect();
-            String sql = "INSERT INTO BookedRoom VALUES (?,?,?,?,NOW())";
+            String sql = "INSERT INTO BookedRoom (userID, roomID, checkInDate, checkOutDate, operationTime) VALUES (?,?,?,?,NOW())";
             preparedStatement = connection.prepareStatement(sql, ResultSet.TYPE_SCROLL_INSENSITIVE, ResultSet.CONCUR_UPDATABLE);
 
             preparedStatement.setInt(1, userID);
@@ -479,6 +484,8 @@ public class Booking {
             }
             if (!isCheckInDate && input.isEmpty()) {
                 return LocalDate.MIN;
+            } else if (isCheckInDate && input.isEmpty()) {
+                return LocalDate.now();
             }
             for (String each : date) {
                 if (each.isEmpty()) {
@@ -506,13 +513,6 @@ public class Booking {
             }
             month = Integer.parseInt(date[1]);
             day = Integer.parseInt(date[2]);
-            if (LocalDate.of(year, month, day).isBefore(LocalDate.now())) {
-                System.out.println("=========================================");
-                System.out.println("You cannot specify the date before today.");
-                System.out.println("=========================================");
-                input = validDate(scanner);
-                continue;
-            }
             boolean leapYear = year % 400 == 0 || (year % 4 == 0 && year % 100 != 0);
             if (year >= 3200) {
                 leapYear = false;
@@ -544,6 +544,13 @@ public class Booking {
                     input = validDate(scanner);
                     continue;
                 }
+            }
+            if (LocalDate.of(year, month, day).isBefore(LocalDate.now())) {
+                System.out.println("=========================================");
+                System.out.println("You cannot specify the date before today.");
+                System.out.println("=========================================");
+                input = validDate(scanner);
+                continue;
             }
             break;
         }
