@@ -55,7 +55,7 @@ public class Guest {
     }
 
     public static int[] login() {
-        int[] ints = {9, 0};
+        int[] ints = {10, 0};
         Map<String, String> userLoginInfo = verify();
         if (userLoginInfo == null) {
             ints[0] = 1;
@@ -286,7 +286,7 @@ public class Guest {
         return personalInfo;
     }
 
-    private static String verifyEmpty(Scanner scanner, String information, String repeated) {
+    protected static String verifyEmpty(Scanner scanner, String information, String repeated) {
         String input;
         input = scanner.nextLine().trim();
         while (input.isEmpty()) {
@@ -473,11 +473,11 @@ public class Guest {
                 }
                 System.out.println("===========================================================");
                 System.out.print("This username has already exist, please choose another one: ");
-                input = verifyEmpty(scanner, "your new Username", repeated);
+                input = verifyEmpty(scanner, "your new Username: ", repeated);
                 while (input == null) {
                     System.out.println("=========================");
                     System.out.println("You cannot return at here");
-                    input = verifyEmpty(scanner, "your new Username", repeated);
+                    input = verifyEmpty(scanner, "your new Username: ", repeated);
                 }
             }
             while (changeInfo.equals("3") || changeInfo.equals("real name")) {//real name further checking
@@ -487,11 +487,11 @@ public class Guest {
                 } else {
                     System.out.println("=============================================================");
                     System.out.print("Invalid input. Name could only includes characters and space: ");
-                    input = verifyEmpty(scanner, "your Real Name", repeated);
+                    input = verifyEmpty(scanner, "your Real Name: ", repeated);
                     while (input == null) {
                         System.out.println("===============================================================================================");
                         System.out.print("You cannot return at here, you can update your information here and cancel it in previous page: ");
-                        input = verifyEmpty(scanner, "your Real Name", repeated);
+                        input = verifyEmpty(scanner, "your Real Name: ", repeated);
                     }
                 }
             }
@@ -502,11 +502,11 @@ public class Guest {
                 } else {
                     System.out.println("=============================================================================================================");
                     System.out.print("Invalid input. The standard passport ID length is not longer than 9 bits including digits or UPPERCASE chars: ");
-                    input = verifyEmpty(scanner, "your Passport ID", repeated);
+                    input = verifyEmpty(scanner, "your Passport ID: ", repeated);
                     while (input == null) {
                         System.out.println("===============================================================================================");
                         System.out.print("You cannot return at here, you can update your information here and cancel it in previous page: ");
-                        input = verifyEmpty(scanner, "your Passport ID", repeated);
+                        input = verifyEmpty(scanner, "your Passport ID: ", repeated);
                     }
                     input = input.toUpperCase();
                 }
@@ -518,11 +518,11 @@ public class Guest {
                 } else {
                     System.out.println("=======================================================");
                     System.out.print("Invalid input. Phone Number could only includes digits: ");
-                    input = verifyEmpty(scanner, "your Phone Number", repeated);
+                    input = verifyEmpty(scanner, "your Phone Number: ", repeated);
                     while (input == null) {
                         System.out.println("===============================================================================================");
                         System.out.print("You cannot return at here, you can update your information here and cancel it in previous page: ");
-                        input = verifyEmpty(scanner, "your Phone Number", repeated);
+                        input = verifyEmpty(scanner, "your Phone Number: ", repeated);
                     }
                 }
             }
@@ -533,11 +533,11 @@ public class Guest {
                 } else {
                     System.out.println("==============================================");
                     System.out.print("Invalid input. Your Email format is incorrect: ");
-                    input = verifyEmpty(scanner, "your Email", repeated);
+                    input = verifyEmpty(scanner, "your Email: ", repeated);
                     while (input == null) {
                         System.out.println("===============================================================================================");
                         System.out.print("You cannot return at here, you can update your information here and cancel it in previous page: ");
-                        input = verifyEmpty(scanner, "your Email", repeated);
+                        input = verifyEmpty(scanner, "your Email: ", repeated);
                     }
                 }
             }

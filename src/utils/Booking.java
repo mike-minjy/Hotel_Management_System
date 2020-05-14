@@ -57,23 +57,23 @@ public class Booking {
             switch (input) {
                 case "1":
                 case "book rooms":
-                    ints[0] = 10;
+                    ints[0] = 11;
                     return ints;
                 case "2":
                 case "cancel booked rooms":
-                    ints[0] = 11;
+                    ints[0] = 12;
                     return ints;
                 case "3":
                 case "book meal"://Still developing
-                    ints[0] = 12;
+                    ints[0] = 13;
                     return ints;
                 case "4":
                 case "cancel booked meal"://Still developing
-                    ints[0] = 13;
+                    ints[0] = 14;
                     return ints;
                 case "5":
                 case "update personal details"://Almost done
-                    ints[0] = 14;
+                    ints[0] = 15;
                     return ints;
                 case "6":
                 case "log out"://Done
@@ -95,7 +95,7 @@ public class Booking {
 
     public static int[] bookRooms(int userID) {
         DB_Utility.printCurrentTime();
-        int[] userInfo = {9, userID};
+        int[] userInfo = {10, userID};
         int roomID = 0;
         byte roomType_ID = 0;
         String input;
@@ -235,6 +235,9 @@ public class Booking {
                             System.out.println("Please type in an available room.");
                             System.out.println("=================================");
                             //There is an issue about "living one day" guest, they cannot be split from available rooms.
+                            //SQL may not be able to solve this problem
+                            //use Java to filter out the tuples with mismatch condition
+                            //(Load all tuples to a "ResultSet" and filter out mismatch tuples)
                         }
                     }
                 }
@@ -270,15 +273,28 @@ public class Booking {
         PreparedStatement preparedStatement = null;
         ResultSet resultSet = null;
         int roomID = 0;
+        String sql;
         try {
             connection = DB_Utility.connect();
-            String sql = "SELECT DISTINCT roomID FROM Room NATURAL JOIN RoomType LEFT OUTER JOIN BookedRoom USING (roomID) WHERE roomTypeID = ? AND ((checkOutDate < ? OR checkInDate > ?) OR (checkInDate IS NULL AND checkOutDate IS NULL))";
+
+            sql = "SELECT * FROM BookedRoom WHERE checkInDate > ?";
+            preparedStatement = connection.prepareStatement(sql);
+            preparedStatement.setDate(1, Date.valueOf(checkInDate));
+            resultSet = preparedStatement.executeQuery();
+
+            if (resultSet.next()) {
+                sql = "SELECT DISTINCT roomID FROM Room NATURAL JOIN RoomType LEFT OUTER JOIN BookedRoom USING (roomID) WHERE roomTypeID = ? AND ((checkOutDate < ? OR checkInDate > ?) OR (checkInDate IS NULL AND checkOutDate IS NULL))";
+            } else {
+                sql = "SELECT DISTINCT roomID FROM Room NATURAL JOIN RoomType LEFT OUTER JOIN Future_Room_Info USING (roomID) WHERE roomTypeID = ? AND ((checkOutDate < ? OR checkInDate > ?) OR (checkInDate IS NULL AND checkOutDate IS NULL))";
+            }
+
             preparedStatement = connection.prepareStatement(sql, ResultSet.TYPE_SCROLL_INSENSITIVE, ResultSet.CONCUR_UPDATABLE);
             preparedStatement.setByte(1, roomType_ID);
             preparedStatement.setDate(2, Date.valueOf(checkInDate));
             preparedStatement.setDate(3, Date.valueOf(checkOutDate));
             resultSet = preparedStatement.executeQuery();
             roomID = getRandomRoom(resultSet);
+
         } catch (Exception e) {
             e.printStackTrace();
         } finally {
@@ -310,19 +326,41 @@ public class Booking {
         String sql;
         try {
             connection = DB_Utility.connect();
-            if (roomType_ID == 0) {
-                sql = "SELECT DISTINCT roomID FROM Room NATURAL JOIN RoomType LEFT OUTER JOIN BookedRoom USING (roomID) WHERE (checkOutDate < ? OR checkInDate > ?) OR (checkInDate IS NULL AND checkOutDate IS NULL)";
-                preparedStatement = connection.prepareStatement(sql);
-                preparedStatement.setDate(1, Date.valueOf(checkInDate));
-                preparedStatement.setDate(2, Date.valueOf(checkOutDate));
+
+            sql = "SELECT * FROM BookedRoom WHERE checkInDate > ?";
+            preparedStatement = connection.prepareStatement(sql);
+            preparedStatement.setDate(1, Date.valueOf(checkInDate));
+            resultSet = preparedStatement.executeQuery();
+
+            if (resultSet.next()) {
+                if (roomType_ID == 0) {
+                    sql = "SELECT DISTINCT roomID FROM Room NATURAL JOIN RoomType LEFT OUTER JOIN BookedRoom USING (roomID) WHERE (checkOutDate < ? OR checkInDate > ?) OR (checkInDate IS NULL AND checkOutDate IS NULL)";
+                    preparedStatement = connection.prepareStatement(sql);
+                    preparedStatement.setDate(1, Date.valueOf(checkInDate));
+                    preparedStatement.setDate(2, Date.valueOf(checkOutDate));
+                } else {
+                    sql = "SELECT DISTINCT roomID FROM Room NATURAL JOIN RoomType LEFT OUTER JOIN BookedRoom USING (roomID) WHERE roomTypeID = ? AND ((checkOutDate < ? OR checkInDate > ?) OR (checkInDate IS NULL AND checkOutDate IS NULL))";
+                    preparedStatement = connection.prepareStatement(sql);
+                    preparedStatement.setInt(1, roomType_ID);
+                    preparedStatement.setDate(2, Date.valueOf(checkInDate));
+                    preparedStatement.setDate(3, Date.valueOf(checkOutDate));
+                }
             } else {
-                sql = "SELECT DISTINCT roomID FROM Room NATURAL JOIN RoomType LEFT OUTER JOIN BookedRoom USING (roomID) WHERE roomTypeID = ? AND ((checkOutDate < ? OR checkInDate > ?) OR (checkInDate IS NULL AND checkOutDate IS NULL))";
-                preparedStatement = connection.prepareStatement(sql);
-                preparedStatement.setInt(1, roomType_ID);
-                preparedStatement.setDate(2, Date.valueOf(checkInDate));
-                preparedStatement.setDate(3, Date.valueOf(checkOutDate));
+                if (roomType_ID == 0) {
+                    sql = "SELECT DISTINCT roomID FROM Room NATURAL JOIN RoomType LEFT OUTER JOIN future_room_info USING (roomID) WHERE (checkOutDate < ? OR checkInDate > ?) OR (checkInDate IS NULL AND checkOutDate IS NULL)";
+                    preparedStatement = connection.prepareStatement(sql);
+                    preparedStatement.setDate(1, Date.valueOf(checkInDate));
+                    preparedStatement.setDate(2, Date.valueOf(checkOutDate));
+                } else {
+                    sql = "SELECT DISTINCT roomID FROM Room NATURAL JOIN RoomType LEFT OUTER JOIN future_room_info USING (roomID) WHERE roomTypeID = ? AND ((checkOutDate < ? OR checkInDate > ?) OR (checkInDate IS NULL AND checkOutDate IS NULL))";
+                    preparedStatement = connection.prepareStatement(sql);
+                    preparedStatement.setInt(1, roomType_ID);
+                    preparedStatement.setDate(2, Date.valueOf(checkInDate));
+                    preparedStatement.setDate(3, Date.valueOf(checkOutDate));
+                }
             }
             resultSet = preparedStatement.executeQuery();
+
             if (resultSet.next()) {
                 notHasBeenBooked = 1;
             }
@@ -342,15 +380,28 @@ public class Booking {
         PreparedStatement preparedStatement = null;
         ResultSet resultSet = null;
         boolean isAvailable = false;
+        String sql;
         try {
             connection = DB_Utility.connect();
-            String sql = "SELECT DISTINCT roomID FROM Room NATURAL JOIN RoomType LEFT OUTER JOIN BookedRoom USING (roomID) WHERE roomID = ? AND ((checkOutDate < ? OR checkInDate > ?) OR (checkInDate IS NULL AND checkOutDate IS NULL))";
+
+            sql = "SELECT * FROM BookedRoom WHERE checkInDate > ?";
+            preparedStatement = connection.prepareStatement(sql);
+            preparedStatement.setDate(1, Date.valueOf(checkInDate));
+            resultSet = preparedStatement.executeQuery();
+
+            if (resultSet.next()) {
+                sql = "SELECT DISTINCT roomID FROM Room NATURAL JOIN RoomType LEFT OUTER JOIN BookedRoom USING (roomID) WHERE roomID = ? AND ((checkOutDate < ? OR checkInDate > ?) OR (checkInDate IS NULL AND checkOutDate IS NULL))";
+            }else{
+                sql = "SELECT DISTINCT roomID FROM Room NATURAL JOIN RoomType LEFT OUTER JOIN future_room_info USING (roomID) WHERE roomID = ? AND ((checkOutDate < ? OR checkInDate > ?) OR (checkInDate IS NULL AND checkOutDate IS NULL))";
+            }
+
             preparedStatement = connection.prepareStatement(sql);
             preparedStatement.setInt(1, roomID);
             preparedStatement.setDate(2, Date.valueOf(checkInDate));
             preparedStatement.setDate(3, Date.valueOf(checkOutDate));
             resultSet = preparedStatement.executeQuery();
             if (resultSet.next()) isAvailable = true;
+
         } catch (Exception e) {
             e.printStackTrace();
         } finally {
@@ -366,17 +417,38 @@ public class Booking {
         String sql;
         try {
             connection = DB_Utility.connect();
-            if (roomType_ID == 0) {
-                sql = "SELECT DISTINCT roomID,roomType FROM Room NATURAL JOIN RoomType LEFT OUTER JOIN BookedRoom USING(roomID) WHERE (checkOutDate < ? OR checkInDate > ?) OR (checkInDate IS NULL AND checkOutDate IS NULL)";
-                preparedStatement = connection.prepareStatement(sql);
-                preparedStatement.setDate(1, Date.valueOf(checkInDate));
-                preparedStatement.setDate(2, Date.valueOf(checkOutDate));
-            } else {
-                sql = "SELECT DISTINCT roomID,roomType FROM Room NATURAL JOIN RoomType LEFT OUTER JOIN BookedRoom USING(roomID) WHERE roomTypeID = ? AND ((checkOutDate < ? OR checkInDate > ?) OR (checkInDate IS NULL AND checkOutDate IS NULL))";
-                preparedStatement = connection.prepareStatement(sql);
-                preparedStatement.setInt(1, roomType_ID);
-                preparedStatement.setDate(2, Date.valueOf(checkInDate));
-                preparedStatement.setDate(3, Date.valueOf(checkOutDate));
+
+            sql = "SELECT * FROM BookedRoom WHERE checkInDate > ?";
+            preparedStatement = connection.prepareStatement(sql);
+            preparedStatement.setDate(1, Date.valueOf(checkInDate));
+            resultSet = preparedStatement.executeQuery();
+
+            if (resultSet.next()) {
+                if (roomType_ID == 0) {
+                    sql = "SELECT DISTINCT roomID,roomType FROM Room NATURAL JOIN RoomType LEFT OUTER JOIN BookedRoom USING(roomID) WHERE (checkOutDate < ? OR checkInDate > ?) OR (checkInDate IS NULL AND checkOutDate IS NULL)";
+                    preparedStatement = connection.prepareStatement(sql);
+                    preparedStatement.setDate(1, Date.valueOf(checkInDate));
+                    preparedStatement.setDate(2, Date.valueOf(checkOutDate));
+                } else {
+                    sql = "SELECT DISTINCT roomID,roomType FROM Room NATURAL JOIN RoomType LEFT OUTER JOIN BookedRoom USING(roomID) WHERE roomTypeID = ? AND ((checkOutDate < ? OR checkInDate > ?) OR (checkInDate IS NULL AND checkOutDate IS NULL))";
+                    preparedStatement = connection.prepareStatement(sql);
+                    preparedStatement.setInt(1, roomType_ID);
+                    preparedStatement.setDate(2, Date.valueOf(checkInDate));
+                    preparedStatement.setDate(3, Date.valueOf(checkOutDate));
+                }
+            }else {
+                if (roomType_ID == 0) {
+                    sql = "SELECT DISTINCT roomID,roomType FROM Room NATURAL JOIN RoomType LEFT OUTER JOIN future_room_info USING(roomID) WHERE (checkOutDate < ? OR checkInDate > ?) OR (checkInDate IS NULL AND checkOutDate IS NULL)";
+                    preparedStatement = connection.prepareStatement(sql);
+                    preparedStatement.setDate(1, Date.valueOf(checkInDate));
+                    preparedStatement.setDate(2, Date.valueOf(checkOutDate));
+                } else {
+                    sql = "SELECT DISTINCT roomID,roomType FROM Room NATURAL JOIN RoomType LEFT OUTER JOIN future_room_info USING(roomID) WHERE roomTypeID = ? AND ((checkOutDate < ? OR checkInDate > ?) OR (checkInDate IS NULL AND checkOutDate IS NULL))";
+                    preparedStatement = connection.prepareStatement(sql);
+                    preparedStatement.setInt(1, roomType_ID);
+                    preparedStatement.setDate(2, Date.valueOf(checkInDate));
+                    preparedStatement.setDate(3, Date.valueOf(checkOutDate));
+                }
             }
             resultSet = preparedStatement.executeQuery();
             System.out.println("--------*----------------");
@@ -431,14 +503,27 @@ public class Booking {
         PreparedStatement preparedStatement = null;
         ResultSet resultSet = null;
         int roomID = 0;
+        String sql;
         try {
             connection = DB_Utility.connect();
-            String sql = "SELECT DISTINCT roomID FROM Room LEFT OUTER JOIN BookedRoom USING (roomID) WHERE (checkOutDate < ? OR checkInDate > ?) OR (checkInDate IS NULL AND checkOutDate IS NULL)";
+
+            sql = "SELECT * FROM BookedRoom WHERE checkInDate > ?";
+            preparedStatement = connection.prepareStatement(sql);
+            preparedStatement.setDate(1, Date.valueOf(checkInDate));
+            resultSet = preparedStatement.executeQuery();
+
+            if (resultSet.next()) {
+                sql = "SELECT DISTINCT roomID FROM Room LEFT OUTER JOIN BookedRoom USING (roomID) WHERE (checkOutDate < ? OR checkInDate > ?) OR (checkInDate IS NULL AND checkOutDate IS NULL)";
+            }else{
+                sql = "SELECT DISTINCT roomID FROM Room LEFT OUTER JOIN future_room_info USING (roomID) WHERE (checkOutDate < ? OR checkInDate > ?) OR (checkInDate IS NULL AND checkOutDate IS NULL)";
+            }
+
             preparedStatement = connection.prepareStatement(sql, ResultSet.TYPE_SCROLL_INSENSITIVE, ResultSet.CONCUR_UPDATABLE);
             preparedStatement.setDate(1, Date.valueOf(checkInDate));
             preparedStatement.setDate(2, Date.valueOf(checkOutDate));
             resultSet = preparedStatement.executeQuery();
             roomID = getRandomRoom(resultSet);
+
         } catch (Exception e) {
             e.printStackTrace();
         } finally {
@@ -611,6 +696,9 @@ public class Booking {
     }
 
     public static int[] bookMeal(int userID) {
+        //Maybe add price or count in bookedMeal table
+        //No matter ordinary customer or guest of hotel can book meal in the hotel, but guest can get 20% discount.
+        //ordinary customer bookedRoom_ID will set to NULL
         int[] userInfo = {9, userID};
         return userInfo;
     }
@@ -647,5 +735,106 @@ public class Booking {
             DB_Utility.close(connection, preparedStatement, resultSet);
         }
         return userInfo;
+    }
+
+    public static void backupInfo() {
+        Connection connection = null;
+        PreparedStatement preparedStatement = null;
+        ResultSet resultSet = null;
+        String sql;
+        try {
+            connection = DB_Utility.connect();
+
+            //Start: get overdue booked room information
+            sql = "SELECT * FROM BookedRoom WHERE checkOutDate < ?";
+            preparedStatement = connection.prepareStatement(sql, ResultSet.TYPE_SCROLL_INSENSITIVE, ResultSet.CONCUR_UPDATABLE);
+            preparedStatement.setDate(1, Date.valueOf(LocalDate.now()));
+            resultSet = preparedStatement.executeQuery();
+
+            if (resultSet.first()) {
+                resultSet.beforeFirst();
+
+                sql = "INSERT INTO Overdue_Room_Info VALUES (?,?,?,?,?,?)";
+                preparedStatement = connection.prepareStatement(sql, ResultSet.TYPE_SCROLL_INSENSITIVE, ResultSet.CONCUR_UPDATABLE);
+                while (resultSet.next()) {
+                    preparedStatement.setInt(1, resultSet.getInt(1));//"bookedRoom_ID"
+                    preparedStatement.setInt(2, resultSet.getInt(2));//"userID"
+                    preparedStatement.setInt(3, resultSet.getInt(3));//"roomID"
+                    preparedStatement.setDate(4, resultSet.getDate(4));//"checkInDate"
+                    preparedStatement.setDate(5, resultSet.getDate(5));//"checkOutDate"
+                    preparedStatement.setTimestamp(6, resultSet.getTimestamp(6));//"operationTime"
+                    preparedStatement.addBatch();
+                }
+                preparedStatement.executeBatch();
+
+                sql = "DELETE FROM BookedRoom WHERE checkOutDate < ?";
+                preparedStatement = connection.prepareStatement(sql);
+                preparedStatement.setDate(1, Date.valueOf(LocalDate.now()));
+                preparedStatement.executeUpdate();
+            }
+            //End
+
+            //Start: future booked room information backup to the future_room_info table
+            sql = "SELECT * FROM BookedRoom WHERE checkInDate > ?";
+            preparedStatement = connection.prepareStatement(sql, ResultSet.TYPE_SCROLL_INSENSITIVE, ResultSet.CONCUR_UPDATABLE);
+            preparedStatement.setDate(1, Date.valueOf(LocalDate.now()));
+            resultSet = preparedStatement.executeQuery();
+
+            if (resultSet.first()) {
+                resultSet.beforeFirst();
+
+                sql = "INSERT INTO Future_Room_Info VALUES (?,?,?,?,?,?)";
+                preparedStatement = connection.prepareStatement(sql, ResultSet.TYPE_SCROLL_INSENSITIVE, ResultSet.CONCUR_UPDATABLE);
+                while (resultSet.next()) {
+                    preparedStatement.setInt(1, resultSet.getInt(1));//"bookedRoom_ID"
+                    preparedStatement.setInt(2, resultSet.getInt(2));//"userID"
+                    preparedStatement.setInt(3, resultSet.getInt(3));//"roomID"
+                    preparedStatement.setDate(4, resultSet.getDate(4));//"checkInDate"
+                    preparedStatement.setDate(5, resultSet.getDate(5));//"checkOutDate"
+                    preparedStatement.setTimestamp(6, resultSet.getTimestamp(6));//"operationTime"
+                    preparedStatement.addBatch();
+                }
+                preparedStatement.executeBatch();
+
+                sql = "DELETE FROM BookedRoom WHERE checkInDate > ?";
+                preparedStatement = connection.prepareStatement(sql);
+                preparedStatement.setDate(1, Date.valueOf(LocalDate.now()));
+                preparedStatement.executeUpdate();
+            }
+            //End
+
+            //Start: get future booked room information backup to the bookedRoom table
+            sql = "SELECT * FROM Future_Room_Info WHERE checkInDate <= ?";
+            preparedStatement = connection.prepareStatement(sql, ResultSet.TYPE_SCROLL_INSENSITIVE, ResultSet.CONCUR_UPDATABLE);
+            preparedStatement.setDate(1, Date.valueOf(LocalDate.now()));
+            resultSet = preparedStatement.executeQuery();
+
+            if (resultSet.first()) {
+                resultSet.beforeFirst();
+
+                sql = "INSERT INTO BookedRoom VALUES (?,?,?,?,?,?)";
+                preparedStatement = connection.prepareStatement(sql, ResultSet.TYPE_SCROLL_INSENSITIVE, ResultSet.CONCUR_UPDATABLE);
+                while (resultSet.next()) {
+                    preparedStatement.setInt(1, resultSet.getInt(1));//"bookedRoom_ID"
+                    preparedStatement.setInt(2, resultSet.getInt(2));//"userID"
+                    preparedStatement.setInt(3, resultSet.getInt(3));//"roomID"
+                    preparedStatement.setDate(4, resultSet.getDate(4));//"checkInDate"
+                    preparedStatement.setDate(5, resultSet.getDate(5));//"checkOutDate"
+                    preparedStatement.setTimestamp(6, resultSet.getTimestamp(6));//"operationTime"
+                    preparedStatement.addBatch();
+                }
+                preparedStatement.executeBatch();
+
+                sql = "DELETE FROM Future_Room_Info WHERE checkInDate <= ?";
+                preparedStatement = connection.prepareStatement(sql);
+                preparedStatement.setDate(1, Date.valueOf(LocalDate.now()));
+                preparedStatement.executeUpdate();
+            }
+            //End
+        } catch (Exception e) {
+            e.printStackTrace();
+        } finally {
+            DB_Utility.close(connection, preparedStatement, resultSet);
+        }
     }
 }

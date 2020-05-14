@@ -11,7 +11,7 @@
  Target Server Version : 80019
  File Encoding         : 65001
 
- Date: 12/05/2020 04:57:37
+ Date: 15/05/2020 03:22:35
 */
 
 SET NAMES utf8mb4;
@@ -23,11 +23,13 @@ SET FOREIGN_KEY_CHECKS = 0;
 DROP TABLE IF EXISTS `bookedmeal`;
 CREATE TABLE `bookedmeal`  (
   `bookedMeal_ID` int(0) UNSIGNED NOT NULL AUTO_INCREMENT,
-  `bookedRoom_ID` int(0) UNSIGNED NOT NULL,
+  `bookedRoom_ID` int(0) UNSIGNED NULL DEFAULT NULL,
   `chefID` tinyint(0) UNSIGNED NOT NULL,
   `dishes` varchar(60) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NOT NULL,
   `orderDate` datetime(0) NOT NULL,
   `serveDate` datetime(0) NOT NULL,
+  `count` int(0) UNSIGNED NOT NULL DEFAULT 1,
+  `totalPrice` float UNSIGNED NOT NULL,
   PRIMARY KEY (`bookedMeal_ID`) USING BTREE,
   INDEX `fk_BookedMeal_Chef`(`chefID`) USING BTREE,
   INDEX `fk_BookedMeal_Meal`(`dishes`) USING BTREE,
@@ -35,7 +37,7 @@ CREATE TABLE `bookedmeal`  (
   CONSTRAINT `fk_BookedMeal_BookedRoom` FOREIGN KEY (`bookedRoom_ID`) REFERENCES `bookedroom` (`bookedRoom_ID`) ON DELETE RESTRICT ON UPDATE RESTRICT,
   CONSTRAINT `fk_BookedMeal_Chef` FOREIGN KEY (`chefID`) REFERENCES `chef` (`chefID`) ON DELETE RESTRICT ON UPDATE RESTRICT,
   CONSTRAINT `fk_BookedMeal_Meal` FOREIGN KEY (`dishes`) REFERENCES `meal` (`dishes`) ON DELETE RESTRICT ON UPDATE RESTRICT
-) ENGINE = InnoDB CHARACTER SET = utf8mb4 COLLATE = utf8mb4_0900_ai_ci ROW_FORMAT = Dynamic;
+) ENGINE = InnoDB AUTO_INCREMENT = 1 CHARACTER SET = utf8mb4 COLLATE = utf8mb4_0900_ai_ci ROW_FORMAT = Dynamic;
 
 -- ----------------------------
 -- Records of bookedmeal
@@ -57,21 +59,17 @@ CREATE TABLE `bookedroom`  (
   INDEX `fk_BookedRoom_Room`(`roomID`) USING BTREE,
   CONSTRAINT `fk_BookedRoom_Guest` FOREIGN KEY (`userID`) REFERENCES `guest` (`userID`) ON DELETE RESTRICT ON UPDATE RESTRICT,
   CONSTRAINT `fk_BookedRoom_Room` FOREIGN KEY (`roomID`) REFERENCES `room` (`roomID`) ON DELETE RESTRICT ON UPDATE RESTRICT
-) ENGINE = InnoDB CHARACTER SET = utf8mb4 COLLATE = utf8mb4_0900_ai_ci ROW_FORMAT = Dynamic;
+) ENGINE = InnoDB AUTO_INCREMENT = 14 CHARACTER SET = utf8mb4 COLLATE = utf8mb4_0900_ai_ci ROW_FORMAT = Dynamic;
 
 -- ----------------------------
 -- Records of bookedroom
 -- ----------------------------
-INSERT INTO `bookedroom` VALUES (1, 2, 113, '2020-05-16', '2020-05-18', '2020-05-13 03:38:40');
 INSERT INTO `bookedroom` VALUES (2, 3, 210, '2020-05-06', '2020-05-22', '2020-05-05 12:38:51');
 INSERT INTO `bookedroom` VALUES (3, 4, 707, '2020-04-23', '2020-05-19', '2020-04-09 15:38:59');
-INSERT INTO `bookedroom` VALUES (4, 5, 906, '2020-05-06', '2020-05-13', '2020-05-03 11:39:17');
-INSERT INTO `bookedroom` VALUES (5, 2, 906, '2020-02-06', '2020-03-12', '2020-02-03 08:28:31');
-INSERT INTO `bookedroom` VALUES (6, 2, 505, '2020-03-20', '2020-04-16', '2020-03-10 18:40:03');
-INSERT INTO `bookedroom` VALUES (7, 7, 701, '2020-05-11', '2020-05-11', '2020-05-11 11:43:35');
-INSERT INTO `bookedroom` VALUES (8, 8, 313, '2020-05-11', '2020-05-11', '2020-05-11 23:58:38');
-INSERT INTO `bookedroom` VALUES (9, 9, 113, '2020-05-12', '2020-05-12', '2020-05-12 11:49:13');
-INSERT INTO `bookedroom` VALUES (10, 6, 804, '2020-05-12', '2020-05-12', '2020-05-12 15:36:31');
+INSERT INTO `bookedroom` VALUES (13, 4, 113, '2020-05-15', '2020-05-15', '2020-05-13 17:07:05');
+INSERT INTO `bookedroom` VALUES (14, 6, 713, '2020-05-15', '2020-05-16', '2020-05-15 02:59:18');
+INSERT INTO `bookedroom` VALUES (16, 6, 913, '2020-05-15', '2020-12-01', '2020-05-15 03:11:56');
+INSERT INTO `bookedroom` VALUES (17, 6, 607, '2020-05-16', '2020-12-01', '2020-05-15 03:20:27');
 
 -- ----------------------------
 -- Table structure for chef
@@ -92,6 +90,27 @@ INSERT INTO `chef` VALUES (3, 'Thalia Hensley');
 INSERT INTO `chef` VALUES (4, 'Nisha Moss');
 
 -- ----------------------------
+-- Table structure for future_room_info
+-- ----------------------------
+DROP TABLE IF EXISTS `future_room_info`;
+CREATE TABLE `future_room_info`  (
+  `bookedRoom_ID` int(0) UNSIGNED NOT NULL,
+  `userID` int(0) UNSIGNED NOT NULL,
+  `roomID` int(0) UNSIGNED NOT NULL,
+  `checkInDate` date NOT NULL,
+  `checkOutDate` date NOT NULL,
+  `operationTime` timestamp(0) NOT NULL,
+  PRIMARY KEY (`bookedRoom_ID`) USING BTREE
+) ENGINE = InnoDB CHARACTER SET = utf8mb4 COLLATE = utf8mb4_0900_ai_ci ROW_FORMAT = Dynamic;
+
+-- ----------------------------
+-- Records of future_room_info
+-- ----------------------------
+INSERT INTO `future_room_info` VALUES (1, 2, 113, '2020-05-16', '2020-05-18', '2020-05-13 05:36:02');
+INSERT INTO `future_room_info` VALUES (12, 7, 513, '2020-11-01', '2020-12-01', '2020-05-13 10:04:55');
+INSERT INTO `future_room_info` VALUES (15, 6, 913, '2020-11-05', '2020-11-20', '2020-05-15 03:05:30');
+
+-- ----------------------------
 -- Table structure for guest
 -- ----------------------------
 DROP TABLE IF EXISTS `guest`;
@@ -106,7 +125,7 @@ CREATE TABLE `guest`  (
   `operationTime` timestamp(0) NOT NULL ON UPDATE CURRENT_TIMESTAMP(0),
   PRIMARY KEY (`userID`) USING BTREE,
   UNIQUE INDEX `username`(`username`) USING BTREE
-) ENGINE = InnoDB CHARACTER SET = utf8mb4 COLLATE = utf8mb4_0900_ai_ci ROW_FORMAT = Dynamic;
+) ENGINE = InnoDB AUTO_INCREMENT = 10 CHARACTER SET = utf8mb4 COLLATE = utf8mb4_0900_ai_ci ROW_FORMAT = Dynamic;
 
 -- ----------------------------
 -- Records of guest
@@ -117,7 +136,7 @@ INSERT INTO `guest` VALUES (4, 'mikalon', '666', 'mika', 'QS553322', 59283098, '
 INSERT INTO `guest` VALUES (5, 'ayasaki', '23335', 'miuki', 'NS9365605', 1223366778, NULL, '2020-05-08 22:35:02');
 INSERT INTO `guest` VALUES (6, 'timi', '12356', 'smalion', 'WC33567', 123563216, NULL, '2020-05-11 12:50:03');
 INSERT INTO `guest` VALUES (7, 'minicap', '333666', 'mike simon', 'WCMM22233', 22222256, '2553755@123.com', '2020-05-11 14:58:55');
-INSERT INTO `guest` VALUES (8, 'muniku', '2333666', 'mikunika', 'EC233366', 12333321, '2333@qq.com', '2020-05-12 00:00:53');
+INSERT INTO `guest` VALUES (8, 'muniku', '2333666', 'mikunika', 'EC233366', 222369796, '2333@qq.com', '2020-05-13 20:55:34');
 INSERT INTO `guest` VALUES (9, 'ssscc', 'w2', 'minitab', 'WEVE332', 12389795, '', '2020-05-11 11:05:49');
 
 -- ----------------------------
@@ -126,7 +145,8 @@ INSERT INTO `guest` VALUES (9, 'ssscc', 'w2', 'minitab', 'WEVE332', 12389795, ''
 DROP TABLE IF EXISTS `meal`;
 CREATE TABLE `meal`  (
   `dishes` varchar(60) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NOT NULL,
-  `chefID` tinyint(0) UNSIGNED NULL DEFAULT NULL,
+  `chefID` tinyint(0) UNSIGNED NOT NULL,
+  `price` float UNSIGNED NOT NULL,
   INDEX `fk_Meal_Chef`(`chefID`) USING BTREE,
   INDEX `dishes`(`dishes`) USING BTREE,
   CONSTRAINT `fk_Meal_Chef` FOREIGN KEY (`chefID`) REFERENCES `chef` (`chefID`) ON DELETE RESTRICT ON UPDATE RESTRICT
@@ -135,34 +155,60 @@ CREATE TABLE `meal`  (
 -- ----------------------------
 -- Records of meal
 -- ----------------------------
-INSERT INTO `meal` VALUES ('Shrimp soup', 1);
-INSERT INTO `meal` VALUES ('Cauliflower and mushroom stew', 1);
-INSERT INTO `meal` VALUES ('spicy chicken nuggets', 1);
-INSERT INTO `meal` VALUES ('steamed cod fish', 1);
-INSERT INTO `meal` VALUES ('turkey burger', 1);
-INSERT INTO `meal` VALUES ('veggie burger', 1);
-INSERT INTO `meal` VALUES ('fried egg', 1);
-INSERT INTO `meal` VALUES ('Chicken curry', 2);
-INSERT INTO `meal` VALUES ('Chicken masala', 2);
-INSERT INTO `meal` VALUES ('Mutton Korma', 2);
-INSERT INTO `meal` VALUES ('Keema Curry', 2);
-INSERT INTO `meal` VALUES ('Mushroom Tikka', 2);
-INSERT INTO `meal` VALUES ('fried egg', 2);
-INSERT INTO `meal` VALUES ('curry rice', 2);
-INSERT INTO `meal` VALUES ('Tofu teriyaki', 3);
-INSERT INTO `meal` VALUES ('Shrimp Tempura', 3);
-INSERT INTO `meal` VALUES ('Yaki Udon', 3);
-INSERT INTO `meal` VALUES ('Chicken Katsu', 3);
-INSERT INTO `meal` VALUES ('Salmon sashimi', 3);
-INSERT INTO `meal` VALUES ('fried egg', 3);
-INSERT INTO `meal` VALUES ('curry rice', 3);
-INSERT INTO `meal` VALUES ('Black pepper beef', 4);
-INSERT INTO `meal` VALUES ('Pork chowmein', 4);
-INSERT INTO `meal` VALUES ('Sweet & sour pork', 4);
-INSERT INTO `meal` VALUES ('Gongbao chicken', 4);
-INSERT INTO `meal` VALUES ('Pork Jiaozi', 4);
-INSERT INTO `meal` VALUES ('Soy glazed pork chops', 4);
-INSERT INTO `meal` VALUES ('curry rice', 4);
+INSERT INTO `meal` VALUES ('Shrimp soup', 1, 0);
+INSERT INTO `meal` VALUES ('Cauliflower and mushroom stew', 1, 0);
+INSERT INTO `meal` VALUES ('spicy chicken nuggets', 1, 0);
+INSERT INTO `meal` VALUES ('steamed cod fish', 1, 0);
+INSERT INTO `meal` VALUES ('turkey burger', 1, 0);
+INSERT INTO `meal` VALUES ('veggie burger', 1, 0);
+INSERT INTO `meal` VALUES ('fried egg', 1, 0);
+INSERT INTO `meal` VALUES ('Chicken curry', 2, 0);
+INSERT INTO `meal` VALUES ('Chicken masala', 2, 0);
+INSERT INTO `meal` VALUES ('Mutton Korma', 2, 0);
+INSERT INTO `meal` VALUES ('Keema Curry', 2, 0);
+INSERT INTO `meal` VALUES ('Mushroom Tikka', 2, 0);
+INSERT INTO `meal` VALUES ('fried egg', 2, 0);
+INSERT INTO `meal` VALUES ('curry rice', 2, 0);
+INSERT INTO `meal` VALUES ('Tofu teriyaki', 3, 0);
+INSERT INTO `meal` VALUES ('Shrimp Tempura', 3, 0);
+INSERT INTO `meal` VALUES ('Yaki Udon', 3, 0);
+INSERT INTO `meal` VALUES ('Chicken Katsu', 3, 0);
+INSERT INTO `meal` VALUES ('Salmon sashimi', 3, 0);
+INSERT INTO `meal` VALUES ('fried egg', 3, 0);
+INSERT INTO `meal` VALUES ('curry rice', 3, 0);
+INSERT INTO `meal` VALUES ('Black pepper beef', 4, 0);
+INSERT INTO `meal` VALUES ('Pork chowmein', 4, 0);
+INSERT INTO `meal` VALUES ('Sweet & sour pork', 4, 0);
+INSERT INTO `meal` VALUES ('Gongbao chicken', 4, 0);
+INSERT INTO `meal` VALUES ('Pork Jiaozi', 4, 0);
+INSERT INTO `meal` VALUES ('Soy glazed pork chops', 4, 0);
+INSERT INTO `meal` VALUES ('curry rice', 4, 0);
+
+-- ----------------------------
+-- Table structure for overdue_room_info
+-- ----------------------------
+DROP TABLE IF EXISTS `overdue_room_info`;
+CREATE TABLE `overdue_room_info`  (
+  `bookedRoom_ID` int(0) UNSIGNED NOT NULL,
+  `userID` int(0) UNSIGNED NOT NULL,
+  `roomID` int(0) UNSIGNED NOT NULL,
+  `checkInDate` date NOT NULL,
+  `checkOutDate` date NOT NULL,
+  `operationTime` timestamp(0) NOT NULL,
+  PRIMARY KEY (`bookedRoom_ID`) USING BTREE
+) ENGINE = InnoDB CHARACTER SET = utf8mb4 COLLATE = utf8mb4_0900_ai_ci ROW_FORMAT = Dynamic;
+
+-- ----------------------------
+-- Records of overdue_room_info
+-- ----------------------------
+INSERT INTO `overdue_room_info` VALUES (4, 5, 906, '2020-05-06', '2020-05-14', '2020-05-13 13:59:42');
+INSERT INTO `overdue_room_info` VALUES (5, 2, 906, '2020-02-06', '2020-03-12', '2020-05-13 05:36:10');
+INSERT INTO `overdue_room_info` VALUES (6, 2, 505, '2020-03-20', '2020-04-16', '2020-05-13 05:37:35');
+INSERT INTO `overdue_room_info` VALUES (7, 7, 701, '2020-05-11', '2020-05-11', '2020-05-13 05:37:36');
+INSERT INTO `overdue_room_info` VALUES (8, 8, 313, '2020-05-11', '2020-05-11', '2020-05-13 05:37:38');
+INSERT INTO `overdue_room_info` VALUES (9, 9, 113, '2020-05-12', '2020-05-14', '2020-05-13 16:12:40');
+INSERT INTO `overdue_room_info` VALUES (10, 6, 804, '2020-05-12', '2020-05-12', '2020-05-13 05:37:41');
+INSERT INTO `overdue_room_info` VALUES (11, 5, 313, '2020-05-12', '2020-05-14', '2020-05-13 15:07:20');
 
 -- ----------------------------
 -- Table structure for room
@@ -318,7 +364,7 @@ CREATE TABLE `roomtype`  (
   `roomTypeID` tinyint(0) UNSIGNED NOT NULL AUTO_INCREMENT,
   `roomType` varchar(30) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NOT NULL,
   PRIMARY KEY (`roomTypeID`) USING BTREE
-) ENGINE = InnoDB AUTO_INCREMENT = 4 CHARACTER SET = utf8mb4 COLLATE = utf8mb4_0900_ai_ci ROW_FORMAT = Dynamic;
+) ENGINE = InnoDB AUTO_INCREMENT = 5 CHARACTER SET = utf8mb4 COLLATE = utf8mb4_0900_ai_ci ROW_FORMAT = Dynamic;
 
 -- ----------------------------
 -- Records of roomtype
@@ -370,13 +416,13 @@ CREATE TABLE `staff`  (
   `telephoneNumber` bigint(0) UNSIGNED NOT NULL,
   `operationTime` timestamp(0) NULL DEFAULT NULL ON UPDATE CURRENT_TIMESTAMP(0),
   PRIMARY KEY (`staffID`) USING BTREE
-) ENGINE = InnoDB AUTO_INCREMENT = 3 CHARACTER SET = utf8mb4 COLLATE = utf8mb4_0900_ai_ci ROW_FORMAT = Dynamic;
+) ENGINE = InnoDB AUTO_INCREMENT = 4 CHARACTER SET = utf8mb4 COLLATE = utf8mb4_0900_ai_ci ROW_FORMAT = Dynamic;
 
 -- ----------------------------
 -- Records of staff
 -- ----------------------------
-INSERT INTO `staff` VALUES (1, 'mike', '333', 8615833356871, '2020-05-04 21:55:10');
-INSERT INTO `staff` VALUES (2, 'tiger', '222', 987658632, '2020-05-04 21:55:23');
-INSERT INTO `staff` VALUES (3, 'scott', '111', 2123535768, '2020-05-04 21:55:31');
+INSERT INTO `staff` VALUES (1, 'mike', '2333666', 8615833356871, '2020-05-15 02:58:33');
+INSERT INTO `staff` VALUES (2, 'tiger', '2333', 987658632, '2020-05-14 02:58:47');
+INSERT INTO `staff` VALUES (3, 'scott', '111', 2123535768, '2020-05-09 10:03:31');
 
 SET FOREIGN_KEY_CHECKS = 1;
