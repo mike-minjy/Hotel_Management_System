@@ -1,7 +1,4 @@
-import utils.Booking;
-import utils.DB_Utility;
-import utils.Guest;
-import utils.Staff;
+import utils.*;
 
 import java.util.Scanner;
 
@@ -17,15 +14,15 @@ public class HMS {
             System.out.println("                                 *     Welcome to use this system!     *");
             System.out.println("                                 *-------------------------------------*");
 
-            System.out.println("-----------------------------------------");
-            System.out.println("System needs a few seconds to initialise.");
-            System.out.println("-----------------------------------------");
-            System.out.println();
-
-            //This method will backup the overdue booked room information to another table.
-            //It will also get the current bookedRoom information from future_room_info table,
-            //and put the future booked room information to future_room_info table.
-            Booking.backupInfo();
+//            System.out.println("-----------------------------------------");
+//            System.out.println("System needs a few seconds to initialise.");
+//            System.out.println("-----------------------------------------");
+//            System.out.println();
+//
+//            This method will backup the overdue booked room information to another table.
+//            It will also get the current bookedRoom information from future_room_info table,
+//            and put the future booked room information to future_room_info table.
+//            Booking.backupInfo();
             processing();
 
             System.out.println("Bye");
@@ -90,7 +87,7 @@ public class HMS {
                     System.out.println();
                     step = Staff.changePassword();
                     break;
-                //Dispose the information of the third step
+                //Dispose the information of the third step from guest
                 case 10:
                     System.out.println();
                     userInformation = Booking.startInterface(ID);
@@ -105,7 +102,7 @@ public class HMS {
                     break;
                 case 12:
                     System.out.println();
-                    userInformation = Booking.cancelRooms(ID);
+                    userInformation = Booking.modifyRooms(ID);
                     step = (byte) userInformation[0];
                     ID = userInformation[1];
                     break;
@@ -124,6 +121,49 @@ public class HMS {
                 case 15:
                     System.out.println();
                     userInformation = Booking.update(ID);
+                    step = (byte) userInformation[0];
+                    ID = userInformation[1];
+                    break;
+                //Dispose the information of the third step from staff
+                case 16:
+                    System.out.println();
+                    userInformation = StaffOperation.startInterface(ID);
+                    step = (byte) userInformation[0];
+                    ID = userInformation[1];
+                    break;
+                case 17:
+                    System.out.println();
+                    userInformation = StaffOperation.roomManagement(ID);
+                    step = (byte) userInformation[0];
+                    ID = userInformation[1];
+                    break;
+                case 18:
+                    System.out.println();
+                    userInformation = StaffOperation.changePassword(ID);
+                    step = (byte) userInformation[0];
+                    ID = userInformation[1];
+                    break;
+//                case 19:
+//                    System.out.println();
+//                    userInformation = StaffOperation.addBlackList(ID);
+//                    step = (byte) userInformation[0];
+//                    ID = userInformation[1];
+//                    break;
+                case 20:
+                    System.out.println();
+                    userInformation = Booking.modifyLiveInDate(ID);
+                    step = (byte) userInformation[0];
+                    ID = userInformation[1];
+                    break;
+                case 21:
+                    System.out.println();
+                    userInformation = Booking.modifyLeaveDate(ID);
+                    step = (byte) userInformation[0];
+                    ID = userInformation[1];
+                    break;
+                case 22:
+                    System.out.println();
+                    userInformation = Booking.cancelBookedRoom(ID);
                     step = (byte) userInformation[0];
                     ID = userInformation[1];
                     break;

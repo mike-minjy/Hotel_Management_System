@@ -67,6 +67,7 @@ public class Staff {
 
         if (resultSet.next()) {
             result = true;
+            ints[0] = 16;
             ints[1] = resultSet.getInt("staffID");
         }
 
@@ -130,7 +131,7 @@ public class Staff {
                     System.out.println();
                     System.out.println("============================================================================================");
                     System.out.println("Please type in a new password! You cannot set it same as before.");
-                    System.out.println("Notice: The password is case-insensitive. \'P\' and \'p\' will be treated as the same character.");
+                    System.out.println("Notice: The password is case-insensitive. 'P' and 'p' will be treated as the same character.");
                     System.out.println("Type \"Return\" back to the previous page.");
                     System.out.println("============================================================================================");
                     System.out.println();

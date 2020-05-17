@@ -1,12 +1,12 @@
 package utils;
 
 import java.sql.*;
+import java.sql.Date;
+import java.time.Instant;
 import java.time.LocalDate;
+import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
-import java.util.Calendar;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Scanner;
+import java.util.*;
 import java.util.regex.Pattern;
 
 public class Booking {
@@ -43,10 +43,10 @@ public class Booking {
         int[] ints = {1, userID};
         Scanner scanner = new Scanner(System.in);
         System.out.println("1. Book Rooms");
-        System.out.println("2. Cancel Booked Rooms");
+        System.out.println("2. Modify Booked Rooms");
         System.out.println("3. Book Meal");//Still developing
         System.out.println("4. Cancel Booked Meal");//Still developing
-        System.out.println("5. Update Personal Details");//Almost done
+        System.out.println("5. Update Personal Details");
         System.out.println("6. Log out");
         System.out.println("7. quit the system");
         System.out.println();
@@ -56,11 +56,11 @@ public class Booking {
         while (true) {
             switch (input) {
                 case "1":
-                case "book rooms":
+                case "book rooms"://Almost done
                     ints[0] = 11;
                     return ints;
                 case "2":
-                case "cancel booked rooms":
+                case "modify booked rooms":
                     ints[0] = 12;
                     return ints;
                 case "3":
@@ -213,6 +213,11 @@ public class Booking {
                     while (true) {
                         printAvailableRooms(roomType_ID, checkInDate, checkOutDate);
                         System.out.println("You can click [Enter] to skip this step, then system will automatically arrange an empty room of same type for you.");
+                        //Try not make this happened
+//                        System.out.println("================================================================================================================================");
+//                        System.out.println("Notice: The last few rooms might be booked by other guests during this period.");
+//                        System.out.println("If you choose a room which has been booked after the selection, you will be random distribute a room for the same time interval.");
+//                        System.out.println("================================================================================================================================");
                         System.out.print("There are several available rooms, you can type in the number of roomID to choose a specific room now: ");
                         String room_ID_Handler = scanner.nextLine().trim();
                         if (room_ID_Handler.isEmpty()) {
@@ -234,10 +239,6 @@ public class Booking {
                             System.out.println("=================================");
                             System.out.println("Please type in an available room.");
                             System.out.println("=================================");
-                            //There is an issue about "living one day" guest, they cannot be split from available rooms.
-                            //SQL may not be able to solve this problem
-                            //use Java to filter out the tuples with mismatch condition
-                            //(Load all tuples to a "ResultSet" and filter out mismatch tuples)
                         }
                     }
                 }
@@ -252,7 +253,7 @@ public class Booking {
                 }
             } else {
                 System.out.println("===============================================================================");
-                System.out.println("The room type \"" + roomType.get(roomType_ID) + "\" is not available in this period.");
+                System.out.println("The room type \"" + roomType.get((int) roomType_ID) + "\" is not available in this period.");
                 System.out.println("Please change the room type or check-in/check-out date and book the room again.");
                 System.out.println("We apologise for the inconvenience in the booking steps.");
                 System.out.println("===============================================================================");
@@ -277,21 +278,15 @@ public class Booking {
         try {
             connection = DB_Utility.connect();
 
-            sql = "SELECT * FROM BookedRoom WHERE checkInDate > ?";
-            preparedStatement = connection.prepareStatement(sql);
-            preparedStatement.setDate(1, Date.valueOf(checkInDate));
-            resultSet = preparedStatement.executeQuery();
-
-            if (resultSet.next()) {
-                sql = "SELECT DISTINCT roomID FROM Room NATURAL JOIN RoomType LEFT OUTER JOIN BookedRoom USING (roomID) WHERE roomTypeID = ? AND ((checkOutDate < ? OR checkInDate > ?) OR (checkInDate IS NULL AND checkOutDate IS NULL))";
-            } else {
-                sql = "SELECT DISTINCT roomID FROM Room NATURAL JOIN RoomType LEFT OUTER JOIN Future_Room_Info USING (roomID) WHERE roomTypeID = ? AND ((checkOutDate < ? OR checkInDate > ?) OR (checkInDate IS NULL AND checkOutDate IS NULL))";
-            }
+            sql = "SELECT DISTINCT roomID FROM Room NATURAL JOIN RoomType LEFT OUTER JOIN BookedRoom USING (roomID) WHERE " +
+                    "roomTypeID = ? AND (roomID NOT IN(SELECT roomID FROM bookedroom WHERE (checkInDate >= ? AND checkOutDate <= ?)OR(checkInDate <= ? AND checkOutDate >= ?)OR(checkInDate <= ? AND checkOutDate >= ?)OR(checkInDate <= ? AND checkOutDate >= ?))" +
+                    " OR (checkInDate IS NULL AND checkOutDate IS NULL))";
 
             preparedStatement = connection.prepareStatement(sql, ResultSet.TYPE_SCROLL_INSENSITIVE, ResultSet.CONCUR_UPDATABLE);
             preparedStatement.setByte(1, roomType_ID);
             preparedStatement.setDate(2, Date.valueOf(checkInDate));
-            preparedStatement.setDate(3, Date.valueOf(checkOutDate));
+            setData2(checkOutDate, checkInDate, preparedStatement, Date.valueOf(checkInDate), Date.valueOf(checkOutDate));
+            preparedStatement.setDate(9, Date.valueOf(checkOutDate));
             resultSet = preparedStatement.executeQuery();
             roomID = getRandomRoom(resultSet);
 
@@ -327,38 +322,23 @@ public class Booking {
         try {
             connection = DB_Utility.connect();
 
-            sql = "SELECT * FROM BookedRoom WHERE checkInDate > ?";
-            preparedStatement = connection.prepareStatement(sql);
-            preparedStatement.setDate(1, Date.valueOf(checkInDate));
-            resultSet = preparedStatement.executeQuery();
-
-            if (resultSet.next()) {
-                if (roomType_ID == 0) {
-                    sql = "SELECT DISTINCT roomID FROM Room NATURAL JOIN RoomType LEFT OUTER JOIN BookedRoom USING (roomID) WHERE (checkOutDate < ? OR checkInDate > ?) OR (checkInDate IS NULL AND checkOutDate IS NULL)";
-                    preparedStatement = connection.prepareStatement(sql);
-                    preparedStatement.setDate(1, Date.valueOf(checkInDate));
-                    preparedStatement.setDate(2, Date.valueOf(checkOutDate));
-                } else {
-                    sql = "SELECT DISTINCT roomID FROM Room NATURAL JOIN RoomType LEFT OUTER JOIN BookedRoom USING (roomID) WHERE roomTypeID = ? AND ((checkOutDate < ? OR checkInDate > ?) OR (checkInDate IS NULL AND checkOutDate IS NULL))";
-                    preparedStatement = connection.prepareStatement(sql);
-                    preparedStatement.setInt(1, roomType_ID);
-                    preparedStatement.setDate(2, Date.valueOf(checkInDate));
-                    preparedStatement.setDate(3, Date.valueOf(checkOutDate));
-                }
+            if (roomType_ID == 0) {
+                sql = "SELECT DISTINCT roomID FROM Room NATURAL JOIN RoomType LEFT OUTER JOIN BookedRoom USING (roomID)" +
+                        " WHERE roomID NOT IN(SELECT roomID FROM bookedroom WHERE (checkInDate >= ? AND checkOutDate <= ?)OR(checkInDate <= ? AND checkOutDate >= ?)OR(checkInDate <= ? AND checkOutDate >= ?)OR(checkInDate <= ? AND checkOutDate >= ?)) OR (checkInDate IS NULL AND checkOutDate IS NULL)";
+                preparedStatement = connection.prepareStatement(sql);
+                setData1(checkInDate, checkOutDate, preparedStatement);
             } else {
-                if (roomType_ID == 0) {
-                    sql = "SELECT DISTINCT roomID FROM Room NATURAL JOIN RoomType LEFT OUTER JOIN future_room_info USING (roomID) WHERE (checkOutDate < ? OR checkInDate > ?) OR (checkInDate IS NULL AND checkOutDate IS NULL)";
-                    preparedStatement = connection.prepareStatement(sql);
-                    preparedStatement.setDate(1, Date.valueOf(checkInDate));
-                    preparedStatement.setDate(2, Date.valueOf(checkOutDate));
-                } else {
-                    sql = "SELECT DISTINCT roomID FROM Room NATURAL JOIN RoomType LEFT OUTER JOIN future_room_info USING (roomID) WHERE roomTypeID = ? AND ((checkOutDate < ? OR checkInDate > ?) OR (checkInDate IS NULL AND checkOutDate IS NULL))";
-                    preparedStatement = connection.prepareStatement(sql);
-                    preparedStatement.setInt(1, roomType_ID);
-                    preparedStatement.setDate(2, Date.valueOf(checkInDate));
-                    preparedStatement.setDate(3, Date.valueOf(checkOutDate));
-                }
+                sql = "SELECT DISTINCT roomID FROM Room NATURAL JOIN RoomType LEFT OUTER JOIN BookedRoom USING (roomID)" +
+                        " WHERE roomTypeID = ? AND " +
+                        "((roomID NOT IN(SELECT roomID FROM bookedroom WHERE (checkInDate >= ? AND checkOutDate <= ?)OR(checkInDate <= ? AND checkOutDate >= ?)OR(checkInDate <= ? AND checkOutDate >= ?)OR(checkInDate <= ? AND checkOutDate >= ?)))" +
+                        " OR (checkInDate IS NULL AND checkOutDate IS NULL))";
+                preparedStatement = connection.prepareStatement(sql);
+                preparedStatement.setInt(1, roomType_ID);
+                preparedStatement.setDate(2, Date.valueOf(checkInDate));
+                setData2(checkOutDate, checkInDate, preparedStatement, Date.valueOf(checkInDate), Date.valueOf(checkOutDate));
+                preparedStatement.setDate(9, Date.valueOf(checkOutDate));
             }
+
             resultSet = preparedStatement.executeQuery();
 
             if (resultSet.next()) {
@@ -384,21 +364,16 @@ public class Booking {
         try {
             connection = DB_Utility.connect();
 
-            sql = "SELECT * FROM BookedRoom WHERE checkInDate > ?";
-            preparedStatement = connection.prepareStatement(sql);
-            preparedStatement.setDate(1, Date.valueOf(checkInDate));
-            resultSet = preparedStatement.executeQuery();
+            sql = "SELECT DISTINCT roomID FROM Room NATURAL JOIN RoomType LEFT OUTER JOIN BookedRoom USING (roomID) WHERE roomID = ? AND" +
+                    " ((roomID NOT IN(SELECT roomID FROM bookedroom WHERE (checkInDate >= ? AND checkOutDate <= ?)OR(checkInDate <= ? AND checkOutDate >= ?)OR(checkInDate <= ? AND checkOutDate >= ?)OR(checkInDate <= ? AND checkOutDate >= ?))) OR (checkInDate IS NULL AND checkOutDate IS NULL))";
 
-            if (resultSet.next()) {
-                sql = "SELECT DISTINCT roomID FROM Room NATURAL JOIN RoomType LEFT OUTER JOIN BookedRoom USING (roomID) WHERE roomID = ? AND ((checkOutDate < ? OR checkInDate > ?) OR (checkInDate IS NULL AND checkOutDate IS NULL))";
-            }else{
-                sql = "SELECT DISTINCT roomID FROM Room NATURAL JOIN RoomType LEFT OUTER JOIN future_room_info USING (roomID) WHERE roomID = ? AND ((checkOutDate < ? OR checkInDate > ?) OR (checkInDate IS NULL AND checkOutDate IS NULL))";
-            }
 
             preparedStatement = connection.prepareStatement(sql);
             preparedStatement.setInt(1, roomID);
             preparedStatement.setDate(2, Date.valueOf(checkInDate));
-            preparedStatement.setDate(3, Date.valueOf(checkOutDate));
+            setData2(checkOutDate, checkInDate, preparedStatement, Date.valueOf(checkInDate), Date.valueOf(checkOutDate));
+            preparedStatement.setDate(9, Date.valueOf(checkOutDate));
+
             resultSet = preparedStatement.executeQuery();
             if (resultSet.next()) isAvailable = true;
 
@@ -418,46 +393,31 @@ public class Booking {
         try {
             connection = DB_Utility.connect();
 
-            sql = "SELECT * FROM BookedRoom WHERE checkInDate > ?";
-            preparedStatement = connection.prepareStatement(sql);
-            preparedStatement.setDate(1, Date.valueOf(checkInDate));
-            resultSet = preparedStatement.executeQuery();
-
-            if (resultSet.next()) {
-                if (roomType_ID == 0) {
-                    sql = "SELECT DISTINCT roomID,roomType FROM Room NATURAL JOIN RoomType LEFT OUTER JOIN BookedRoom USING(roomID) WHERE (checkOutDate < ? OR checkInDate > ?) OR (checkInDate IS NULL AND checkOutDate IS NULL)";
-                    preparedStatement = connection.prepareStatement(sql);
-                    preparedStatement.setDate(1, Date.valueOf(checkInDate));
-                    preparedStatement.setDate(2, Date.valueOf(checkOutDate));
-                } else {
-                    sql = "SELECT DISTINCT roomID,roomType FROM Room NATURAL JOIN RoomType LEFT OUTER JOIN BookedRoom USING(roomID) WHERE roomTypeID = ? AND ((checkOutDate < ? OR checkInDate > ?) OR (checkInDate IS NULL AND checkOutDate IS NULL))";
-                    preparedStatement = connection.prepareStatement(sql);
-                    preparedStatement.setInt(1, roomType_ID);
-                    preparedStatement.setDate(2, Date.valueOf(checkInDate));
-                    preparedStatement.setDate(3, Date.valueOf(checkOutDate));
-                }
-            }else {
-                if (roomType_ID == 0) {
-                    sql = "SELECT DISTINCT roomID,roomType FROM Room NATURAL JOIN RoomType LEFT OUTER JOIN future_room_info USING(roomID) WHERE (checkOutDate < ? OR checkInDate > ?) OR (checkInDate IS NULL AND checkOutDate IS NULL)";
-                    preparedStatement = connection.prepareStatement(sql);
-                    preparedStatement.setDate(1, Date.valueOf(checkInDate));
-                    preparedStatement.setDate(2, Date.valueOf(checkOutDate));
-                } else {
-                    sql = "SELECT DISTINCT roomID,roomType FROM Room NATURAL JOIN RoomType LEFT OUTER JOIN future_room_info USING(roomID) WHERE roomTypeID = ? AND ((checkOutDate < ? OR checkInDate > ?) OR (checkInDate IS NULL AND checkOutDate IS NULL))";
-                    preparedStatement = connection.prepareStatement(sql);
-                    preparedStatement.setInt(1, roomType_ID);
-                    preparedStatement.setDate(2, Date.valueOf(checkInDate));
-                    preparedStatement.setDate(3, Date.valueOf(checkOutDate));
-                }
+            if (roomType_ID == 0) {
+                sql = "SELECT DISTINCT roomID,roomType FROM Room NATURAL JOIN RoomType LEFT OUTER JOIN BookedRoom USING(roomID) WHERE " +
+                        "(roomID NOT IN(SELECT roomID FROM bookedroom WHERE (checkInDate >= ? AND checkOutDate <= ?)OR(checkInDate <= ? AND checkOutDate >= ?)OR(checkInDate <= ? AND checkOutDate >= ?)OR(checkInDate <= ? AND checkOutDate >= ?)))" +
+                        " OR (checkInDate IS NULL AND checkOutDate IS NULL)";
+                preparedStatement = connection.prepareStatement(sql);
+                setData1(checkInDate, checkOutDate, preparedStatement);
+            } else {
+                sql = "SELECT DISTINCT roomID,roomType FROM Room NATURAL JOIN RoomType LEFT OUTER JOIN BookedRoom USING(roomID) WHERE roomTypeID = ?" +
+                        " AND ((roomID NOT IN(SELECT roomID FROM bookedroom WHERE (checkInDate >= ? AND checkOutDate <= ?)OR(checkInDate <= ? AND checkOutDate >= ?)OR(checkInDate <= ? AND checkOutDate >= ?)OR(checkInDate <= ? AND checkOutDate >= ?)))" +
+                        " OR (checkInDate IS NULL AND checkOutDate IS NULL))";
+                preparedStatement = connection.prepareStatement(sql);
+                preparedStatement.setInt(1, roomType_ID);
+                preparedStatement.setDate(2, Date.valueOf(checkInDate));
+                setData2(checkOutDate, checkInDate, preparedStatement, Date.valueOf(checkInDate), Date.valueOf(checkOutDate));
+                preparedStatement.setDate(9, Date.valueOf(checkOutDate));
             }
+
             resultSet = preparedStatement.executeQuery();
-            System.out.println("--------*----------------");
-            System.out.println("  Room  |      Type      ");
+            System.out.println("--------*------------------");
+            System.out.println("  Room  |      Type");
             while (resultSet.next()) {
                 System.out.print("  " + resultSet.getString(1) + "\t|" + resultSet.getString(2));
                 System.out.println();
             }
-            System.out.println("--------*----------------");
+            System.out.println("--------*------------------");
         } catch (Exception e) {
             e.printStackTrace();
         } finally {
@@ -507,20 +467,12 @@ public class Booking {
         try {
             connection = DB_Utility.connect();
 
-            sql = "SELECT * FROM BookedRoom WHERE checkInDate > ?";
-            preparedStatement = connection.prepareStatement(sql);
-            preparedStatement.setDate(1, Date.valueOf(checkInDate));
-            resultSet = preparedStatement.executeQuery();
-
-            if (resultSet.next()) {
-                sql = "SELECT DISTINCT roomID FROM Room LEFT OUTER JOIN BookedRoom USING (roomID) WHERE (checkOutDate < ? OR checkInDate > ?) OR (checkInDate IS NULL AND checkOutDate IS NULL)";
-            }else{
-                sql = "SELECT DISTINCT roomID FROM Room LEFT OUTER JOIN future_room_info USING (roomID) WHERE (checkOutDate < ? OR checkInDate > ?) OR (checkInDate IS NULL AND checkOutDate IS NULL)";
-            }
+            sql = "SELECT DISTINCT roomID FROM Room LEFT OUTER JOIN BookedRoom USING (roomID)" +
+                    " WHERE (roomID NOT IN(SELECT roomID FROM bookedroom WHERE (checkInDate >= ? AND checkOutDate <= ?)OR(checkInDate <= ? AND checkOutDate >= ?)OR(checkInDate <= ? AND checkOutDate >= ?)OR(checkInDate <= ? AND checkOutDate >= ?)))" +
+                    " OR (checkInDate IS NULL AND checkOutDate IS NULL)";
 
             preparedStatement = connection.prepareStatement(sql, ResultSet.TYPE_SCROLL_INSENSITIVE, ResultSet.CONCUR_UPDATABLE);
-            preparedStatement.setDate(1, Date.valueOf(checkInDate));
-            preparedStatement.setDate(2, Date.valueOf(checkOutDate));
+            setData1(checkInDate, checkOutDate, preparedStatement);
             resultSet = preparedStatement.executeQuery();
             roomID = getRandomRoom(resultSet);
 
@@ -530,6 +482,21 @@ public class Booking {
             DB_Utility.close(connection, preparedStatement, resultSet);
         }
         insertData(userID, roomID, checkInDate, checkOutDate);
+    }
+
+    private static void setData1(LocalDate checkInDate, LocalDate checkOutDate, PreparedStatement preparedStatement) throws Exception {
+        preparedStatement.setDate(1, Date.valueOf(checkInDate));
+        preparedStatement.setDate(2, Date.valueOf(checkOutDate));
+        setData2(checkInDate, checkOutDate, preparedStatement, Date.valueOf(checkInDate), Date.valueOf(checkOutDate));
+    }
+
+    private static void setData2(LocalDate checkInDate, LocalDate checkOutDate, PreparedStatement preparedStatement, Date date1, Date date2) throws Exception {
+        preparedStatement.setDate(3, Date.valueOf(checkInDate));
+        preparedStatement.setDate(4, date1);
+        preparedStatement.setDate(5, Date.valueOf(checkOutDate));
+        preparedStatement.setDate(6, date2);
+        preparedStatement.setDate(7, Date.valueOf(checkInDate));
+        preparedStatement.setDate(8, Date.valueOf(checkOutDate));
     }
 
     private static void insertData(int userID, int roomID, LocalDate checkInDate, LocalDate checkOutDate) {
@@ -687,30 +654,408 @@ public class Booking {
         System.out.println();
     }
 
-    public static int[] cancelRooms(int userID) {
-        int[] userInfo = {9, userID};
+    public static int[] modifyRooms(int userID) {
+        DB_Utility.printCurrentTime();
+        int[] userInfo = {10, userID};
         //Set the room cannot be canceled after guest leaved hotel
         //If guest leave hotel before check-out date, the end date will automatically set to leave date
         //the record cannot be "deleted" after guest live in the hotel
+        Scanner scanner = new Scanner(System.in);
+        System.out.println("1. Modify Check-in Date");
+        System.out.println("2. Modify Check-out Date");
+        System.out.println("3. Cancel Booked Room");
+        System.out.println("4. Back to previous page");
+        System.out.println("5. Log out");
+        System.out.println("6. quit the system");
+        System.out.println();
+        System.out.print("Please type in the corresponding number to choose your option: ");
+        String input = scanner.nextLine().trim().toLowerCase();
+        while (true) {
+            switch (input) {
+                case "1":
+                case "modify check-in date":
+                    userInfo[0] = 20;
+                    return userInfo;
+                case "2":
+                case "modify check-out date":
+                    userInfo[0] = 21;
+                    return userInfo;
+                case "3":
+                case "cancel booked room":
+                    userInfo[0] = 22;
+                    return userInfo;
+                case "4":
+                case "back to previous page":
+                    return userInfo;
+                case "5":
+                case "log out":
+                    userInfo[0] = 1;
+                    return userInfo;
+                case "6":
+                case "quit the system":
+                    userInfo[0] = -1;
+                    return userInfo;
+                default:
+                    System.out.println();
+                    System.out.println("=====================================================");
+                    System.out.print("Please type in a valid number or full text of option: ");
+                    input = scanner.nextLine().trim().toLowerCase();
+                    break;
+            }
+        }
+    }
+
+    public static int[] modifyLiveInDate(int userID) {
+        DB_Utility.printCurrentTime();
+        int[] userInfo = {12, userID};
+        Connection connection = null;
+        PreparedStatement preparedStatement = null;
+        ResultSet resultSet = null;
+        String sql;
+        try {
+            connection = DB_Utility.connect();
+            sql = "SELECT username AS 'Username',bookedRoom_ID AS 'Order Code',roomID AS 'Room ID',checkInDate AS 'Check-in Date',checkOutDate AS 'Check-out Date'" +
+                    "FROM bookedroom LEFT OUTER JOIN Guest USING (userID) WHERE checkInDate > ? AND userID = ?";
+            preparedStatement = connection.prepareStatement(sql, ResultSet.TYPE_SCROLL_INSENSITIVE, ResultSet.CONCUR_UPDATABLE);
+            preparedStatement.setDate(1, Date.valueOf(LocalDate.now()));
+            preparedStatement.setInt(2, userID);
+            resultSet = preparedStatement.executeQuery();
+
+            if (!resultSet.next()) {
+                System.out.println("============================================================================");
+                System.out.println("You will not live in the hotel in the future, please booked a room at first.");
+                System.out.println("If you are living in the hotel, you can only modify the check-out date.");
+                System.out.println("============================================================================");
+            } else {
+                String username=resultSet.getString("Username");
+                connection.setAutoCommit(false);
+                outerLoop:
+                while (true) {
+                    resultSet.last();
+                    int[] orderCodes = new int[resultSet.getRow()];
+                    int index = 0;
+
+                    System.out.println();
+                    System.out.println("Username: " +username);
+                    System.out.println("Your booked future live in room listed as below:");
+                    resultSet.beforeFirst();
+                    if (resultSet.next()) {
+                        resultSet.beforeFirst();
+                        while (resultSet.next()) {
+                            orderCodes[index] = resultSet.getInt(2);//put order code into an array.
+                            index++;
+                            System.out.println("*************************** " + resultSet.getRow() + ". row ***************************");
+                            for (int i = 2; i <= resultSet.getMetaData().getColumnCount(); i++) {
+                                System.out.println(resultSet.getMetaData().getColumnLabel(i) + ": " + resultSet.getString(i));
+                            }
+                        }
+                        System.out.println("*************************** end row ***************************");
+                    } else {
+                        System.out.println("*********");
+                        System.out.println("Empty Set");
+                        System.out.println("*********");
+                    }
+                    System.out.println();
+
+                    Scanner scanner = new Scanner(System.in);
+                    System.out.println("You can modify the check-in date of a specific room now.");
+                    System.out.println("Type in \"Return\" back to the previous page.");
+                    System.out.println("Type in \"Save\" to submit all changes.");
+                    System.out.print("Please type in the Order Code which you want to modify the check-in date: ");
+                    String input = scanner.nextLine().trim().toLowerCase();
+                    while (true) {
+                        Pattern pattern = Pattern.compile("^[0-9]{1,10}$");
+                        if (input.equals("return") || input.equals("save")) {
+                            System.out.println("---------------------");
+                            System.out.println("1. Save changes");
+                            System.out.println("2. Cancel changes");
+                            System.out.println("3. Continue modifying");
+                            System.out.println("---------------------");
+                            System.out.print("Please choose an option to continue: ");
+                            input = scanner.nextLine().trim().toLowerCase();
+                            switch (input) {
+                                case "1":
+                                case "save changes":
+                                    connection.commit();
+                                    break outerLoop;
+                                case "2":
+                                case "cancel changes":
+                                    connection.rollback();
+                                    break outerLoop;
+                                case "3":
+                                case "continue modifying":
+                                    System.out.println("------------------------------");
+                                    System.out.print("Please type in the Order Code: ");
+                                    input = scanner.nextLine().trim().toLowerCase();
+                                    break;
+                            }
+                        } else if (!pattern.matcher(input).matches() || !codesContains(orderCodes, Integer.parseInt(input))) {
+                            System.out.println("==================================");
+                            System.out.print("Please type in a valid order code: ");
+                            input = scanner.nextLine().trim().toLowerCase();
+                        } else {
+                            break;
+                        }
+                    }
+                    sql = "SELECT roomID,roomTypeID,userID,checkInDate,checkOutDate FROM room LEFT OUTER JOIN bookedroom USING (roomID)" +
+                            " WHERE userID = " + userID + " AND bookedRoom_ID = " + Integer.parseInt(input);
+                    resultSet = preparedStatement.executeQuery(sql);
+                    resultSet.next();
+
+                    System.out.println("----------------------------------------------------------");
+                    System.out.println("Notice: The date regulation is the same as booking a room.");
+                    System.out.println("Click [Enter] to set the check-in day as today.");
+                    System.out.print("Please type in the new live in date: ");
+                    String newLiveInDate = scanner.nextLine().trim().toLowerCase();
+                    LocalDate newCheckInDate = getValidDate(scanner, newLiveInDate, true);
+                    while (newCheckInDate == null) {
+                        System.out.println("-----------------");
+                        System.out.println("1. Save changes");
+                        System.out.println("2. Cancel changes");
+                        System.out.println("-----------------");
+                        System.out.print("Please choose an option to continue: ");
+                        newLiveInDate = scanner.nextLine().trim().toLowerCase();
+                        switch (newLiveInDate) {
+                            case "1":
+                            case "save changes":
+                                connection.commit();
+                                break outerLoop;
+                            case "2":
+                            case "cancel changes":
+                                connection.rollback();
+                                break outerLoop;
+                            default:
+                                System.out.println("==============================");
+                                System.out.println("Please type in a valid option.");
+                                System.out.println("==============================");
+                                break;
+                        }
+                    }
+                    while (checkNotBookedRooms(resultSet.getInt("roomTypeID"), newCheckInDate, resultSet.getDate("checkOutDate").toLocalDate()) == 0) {
+                        if (newCheckInDate.isAfter(resultSet.getDate("checkOutDate").toLocalDate())) {
+                            System.out.println("==================================================");
+                            System.out.println("The check-in date cannot set after check-out date.");
+                            System.out.print("Please type in a valid check-in date: ");
+                        } else {
+                            System.out.println("=================================================");
+                            System.out.println("There exists other guest living in this period.");
+                            System.out.print("Please type in other check-in date and try again: ");
+                        }
+                        newLiveInDate = scanner.nextLine().trim().toLowerCase();
+                        newCheckInDate = getValidDate(scanner, newLiveInDate, true);
+                    }
+                    sql="UPDATE BookedRoom SET checkInDate = ? WHERE bookedRoom_ID = ? AND userID = ?";
+                    preparedStatement=connection.prepareStatement(sql);
+                    preparedStatement.setDate(1, Date.valueOf(newCheckInDate));
+                    preparedStatement.setInt(2, Integer.parseInt(input));
+                    preparedStatement.setInt(3,userID);
+                    preparedStatement.executeUpdate();
+
+                    sql = "SELECT username AS 'Username',bookedRoom_ID AS 'Order Code',roomID AS 'Room ID',checkInDate AS 'Check-in Date',checkOutDate AS 'Check-out Date'" +
+                            "FROM bookedroom LEFT OUTER JOIN Guest USING (userID) WHERE checkInDate > ? AND userID = ?";
+                    preparedStatement = connection.prepareStatement(sql, ResultSet.TYPE_SCROLL_INSENSITIVE, ResultSet.CONCUR_UPDATABLE);
+                    preparedStatement.setDate(1, Date.valueOf(LocalDate.now()));
+                    preparedStatement.setInt(2, userID);
+                    resultSet = preparedStatement.executeQuery();
+                }
+            }
+        } catch (Exception e) {
+            if (connection != null) {
+                try {
+                    connection.rollback();
+                } catch (Exception throwable) {
+                    throwable.printStackTrace();
+                }
+            }
+            e.printStackTrace();
+        } finally {
+            DB_Utility.close(connection, preparedStatement, resultSet);
+        }
         return userInfo;
     }
 
+    public static int[] modifyLeaveDate(int userID) {
+        DB_Utility.printCurrentTime();
+        int[] userInfo = {12, userID};
+        Connection connection = null;
+        PreparedStatement preparedStatement = null;
+        ResultSet resultSet = null;
+        String sql;
+        try {
+            connection = DB_Utility.connect();
+            sql = "SELECT username AS 'Username',bookedRoom_ID AS 'Order Code',roomID AS 'Room ID',checkInDate AS 'Check-in Date',checkOutDate AS 'Check-out Date'" +
+                    "FROM bookedroom LEFT OUTER JOIN Guest USING (userID) WHERE checkOutDate >= ? AND userID = ?";
+            preparedStatement = connection.prepareStatement(sql, ResultSet.TYPE_SCROLL_INSENSITIVE, ResultSet.CONCUR_UPDATABLE);
+            preparedStatement.setDate(1, Date.valueOf(LocalDate.now()));
+            preparedStatement.setInt(2, userID);
+            resultSet = preparedStatement.executeQuery();
+
+            if (!resultSet.next()) {
+                System.out.println("=================================================================================");
+                System.out.println("You will not leave any room, we hope you will live in our hotel in the future.");
+                System.out.println("If you have left a room, we hope you will live in Sunny Isle again in the future.");
+                System.out.println("=================================================================================");
+            } else {
+                resultSet.first();
+                System.out.println();
+                System.out.println("Username: " + resultSet.getString(1));
+                System.out.println("Your living hotel room listed as below:");
+                resultSet.beforeFirst();
+                while (resultSet.next()) {
+                    System.out.println("*************************** " + resultSet.getRow() + ". row ***************************");
+                    for (int i = 2; i <= resultSet.getMetaData().getColumnCount(); i++) {
+                        System.out.println(resultSet.getMetaData().getColumnLabel(i) + ": " + resultSet.getString(i));
+                    }
+                }
+                System.out.println("*************************** end row ***************************");
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        } finally {
+            DB_Utility.close(connection, preparedStatement, resultSet);
+        }
+        return userInfo;
+    }
+
+    public static int[] cancelBookedRoom(int userID) {
+        int[] userInfo = {12, userID};
+        Connection connection = null;
+        PreparedStatement preparedStatement = null;
+        ResultSet resultSet = null;
+        try {
+            connection = DB_Utility.connect();
+            String sql = "SELECT username AS 'Username',bookedRoom_ID AS 'Order Code',roomID AS 'Room ID',checkInDate AS 'Check-in Date',checkOutDate AS 'Check-out Date'" +
+                    " FROM bookedroom LEFT OUTER JOIN Guest USING (userID) WHERE checkInDate > ? AND userID = ?";
+            preparedStatement = connection.prepareStatement(sql, ResultSet.TYPE_SCROLL_INSENSITIVE, ResultSet.CONCUR_UPDATABLE);
+            preparedStatement.setDate(1, Date.valueOf(LocalDate.now()));
+            preparedStatement.setInt(2, userID);
+            resultSet = preparedStatement.executeQuery();
+            if (!resultSet.next()) {
+                System.out.println("==================================================================================================");
+                System.out.println("You have not booked a future live in room, the function is only available for future live in room.");
+                System.out.println("You should book a room at first, and this function will be available.");
+                System.out.println("If you live in a room today, this function is also not available for you.");
+                System.out.println("==================================================================================================");
+            } else {
+                connection.setAutoCommit(false);
+                outerLoop:
+                while (true) {
+                    resultSet.last();
+                    int[] orderCodes = new int[resultSet.getRow()];
+                    int index = 0;
+
+                    System.out.println("Username: " + resultSet.getString(1));
+                    System.out.println();
+                    System.out.println("Your booked future live in room listed as below:");
+                    resultSet.beforeFirst();
+                    if (resultSet.next()) {
+                        resultSet.beforeFirst();
+                        while (resultSet.next()) {
+                            orderCodes[index] = resultSet.getInt(2);//put order code into an array.
+                            index++;
+                            System.out.println("*************************** " + resultSet.getRow() + ". row ***************************");
+                            for (int i = 2; i <= resultSet.getMetaData().getColumnCount(); i++) {
+                                System.out.println(resultSet.getMetaData().getColumnLabel(i) + ": " + resultSet.getString(i));
+                            }
+                        }
+                        System.out.println("*************************** end row ***************************");
+                    } else {
+                        System.out.println("*********");
+                        System.out.println("Empty Set");
+                        System.out.println("*********");
+                    }
+
+                    System.out.println();
+                    Scanner scanner = new Scanner(System.in);
+                    System.out.println("You can type in the Order Code to cancel that booking.");
+                    System.out.println("You can type in \"Return\" back to the previous page.");
+                    System.out.println("Type in \"Save\" to submit all changes.");
+                    System.out.print("Please type in the Order Code: ");
+                    String input = scanner.nextLine().trim().toLowerCase();
+                    while (true) {
+                        Pattern pattern = Pattern.compile("^[0-9]{1,10}$");
+                        if (input.equals("return") || input.equals("save")) {
+                            System.out.println("---------------------");
+                            System.out.println("1. Save changes");
+                            System.out.println("2. Cancel changes");
+                            System.out.println("3. Continue modifying");
+                            System.out.println("---------------------");
+                            System.out.print("Please choose an option to continue: ");
+                            input = scanner.nextLine().trim().toLowerCase();
+                            switch (input) {
+                                case "1":
+                                case "save changes":
+                                    connection.commit();
+                                    break outerLoop;
+                                case "2":
+                                case "cancel changes":
+                                    connection.rollback();
+                                    break outerLoop;
+                                case "3":
+                                case "continue modifying":
+                                    System.out.println("------------------------------");
+                                    System.out.print("Please type in the Order Code: ");
+                                    input = scanner.nextLine().trim().toLowerCase();
+                                    break;
+                            }
+                        } else if (!pattern.matcher(input).matches() || !codesContains(orderCodes, Integer.parseInt(input))) {
+                            System.out.println("==================================");
+                            System.out.print("Please type in a valid Order Code: ");
+                            input = scanner.nextLine().trim().toLowerCase();
+                        } else {
+                            break;
+                        }
+                    }
+                    sql = "DELETE FROM BookedRoom WHERE userID = ? AND bookedRoom_ID = ?";
+                    preparedStatement = connection.prepareStatement(sql);
+                    preparedStatement.setInt(1, userID);
+                    preparedStatement.setInt(2, Integer.parseInt(input));
+                    preparedStatement.executeUpdate();
+                }
+            }
+        } catch (Exception e) {
+            if (connection != null) {
+                try {
+                    connection.rollback();
+                } catch (Exception throwable) {
+                    throwable.printStackTrace();
+                }
+            }
+            e.printStackTrace();
+        } finally {
+            DB_Utility.close(connection, preparedStatement, resultSet);
+        }
+        return userInfo;
+    }
+
+    private static boolean codesContains(int[] orderCodes, int input) {
+        if (orderCodes.length == 0) return false;
+        for (int eachCode : orderCodes) {
+            if (eachCode == input) {
+                return true;//The array contains the input order code.
+            }
+        }
+        return false;//Input is not consistent with any order code in the array.
+    }
+
     public static int[] bookMeal(int userID) {
+        DB_Utility.printCurrentTime();
         //Maybe add price or count in bookedMeal table
         //No matter ordinary customer or guest of hotel can book meal in the hotel, but guest can get 20% discount.
         //ordinary customer bookedRoom_ID will set to NULL
-        int[] userInfo = {9, userID};
+        int[] userInfo = {10, userID};
         return userInfo;
     }
 
     public static int[] cancelMeal(int userID) {
-        int[] userInfo = {9, userID};
+        DB_Utility.printCurrentTime();
+        int[] userInfo = {10, userID};
         return userInfo;
     }
 
     public static int[] update(int userID) {
         DB_Utility.printCurrentTime();
-        int[] userInfo = {9, userID};
+        int[] userInfo = {10, userID};
         Scanner scanner = new Scanner(System.in);
         Connection connection = null;
         PreparedStatement preparedStatement = null;
@@ -737,6 +1082,8 @@ public class Booking {
         return userInfo;
     }
 
+    @Deprecated//It's not necessary anymore,
+    // and future_room_info table and overdue_room_info table will be dropped in future version
     public static void backupInfo() {
         Connection connection = null;
         PreparedStatement preparedStatement = null;

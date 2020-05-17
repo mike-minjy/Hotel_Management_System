@@ -341,7 +341,7 @@ public class Guest {
                 System.out.println();
                 System.out.println("=====================================================================");
                 System.out.println("Verification failed. Please type in the correct username or password.");
-                System.out.println("Program returned to the previous page.");
+                System.out.println("(Notice: Program returned to the previous page.)");
                 System.out.println("=====================================================================");
                 return 1;
             }
@@ -373,6 +373,7 @@ public class Guest {
         attributes.put("4", "Passport ID");
         attributes.put("5", "Phone Number");
         attributes.put("6", "Email");
+        connection.setAutoCommit(false);        //Start transaction
 
         loopFlag:
         while (true) {
@@ -386,7 +387,6 @@ public class Guest {
 
             int userID = resultSet.getInt("userID");
 
-            connection.setAutoCommit(false);        //Start transaction
             for (int i = 1; i <= attributes.size(); i++) {
                 System.out.println((i) + ". " + attributes.get(String.valueOf(i)));
             }
@@ -399,7 +399,7 @@ public class Guest {
             changeInfo = scanner.nextLine().trim().toLowerCase();
             switch (changeInfo) {
                 case "1":
-                case "username"://Checking is still developing
+                case "username":
                     sql = "UPDATE Guest SET username = ? WHERE userID = ?";
                     System.out.print(repeated + "your new Username: ");
                     break;
@@ -409,22 +409,22 @@ public class Guest {
                     System.out.print(repeated + "your new Password: ");
                     break;
                 case "3":
-                case "real name"://Checking is still developing
+                case "real name":
                     sql = "UPDATE Guest SET realName = ? WHERE userID = ?";
                     System.out.print(repeated + "your new Real Name: ");
                     break;
                 case "4":
-                case "passport id"://Checking is still developing
+                case "passport id":
                     sql = "UPDATE Guest SET passportID = ? WHERE userID = ?";
                     System.out.print(repeated + "your new Passport ID: ");
                     break;
                 case "5":
-                case "phone number"://Checking is still developing
+                case "phone number":
                     sql = "UPDATE Guest SET telephoneNumber = ? WHERE userID = ?";
                     System.out.print(repeated + "your new Phone Number: ");
                     break;
                 case "6":
-                case "email"://Checking is still developing
+                case "email":
                     sql = "UPDATE Guest SET email = ? WHERE userID = ?";
                     System.out.print(repeated + "your new Email: ");
                     break;

@@ -1,135 +1,23 @@
-/*
- Navicat Premium Data Transfer
-
- Source Server         : mysql
- Source Server Type    : MySQL
- Source Server Version : 80019
- Source Host           : localhost:3306
- Source Schema         : hms
-
- Target Server Type    : MySQL
- Target Server Version : 80019
- File Encoding         : 65001
-
- Date: 15/05/2020 03:22:35
-*/
-
-SET NAMES utf8mb4;
-SET FOREIGN_KEY_CHECKS = 0;
-
--- ----------------------------
--- Table structure for bookedmeal
--- ----------------------------
 DROP TABLE IF EXISTS `bookedmeal`;
-CREATE TABLE `bookedmeal`  (
-  `bookedMeal_ID` int(0) UNSIGNED NOT NULL AUTO_INCREMENT,
-  `bookedRoom_ID` int(0) UNSIGNED NULL DEFAULT NULL,
-  `chefID` tinyint(0) UNSIGNED NOT NULL,
-  `dishes` varchar(60) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NOT NULL,
-  `orderDate` datetime(0) NOT NULL,
-  `serveDate` datetime(0) NOT NULL,
-  `count` int(0) UNSIGNED NOT NULL DEFAULT 1,
-  `totalPrice` float UNSIGNED NOT NULL,
-  PRIMARY KEY (`bookedMeal_ID`) USING BTREE,
-  INDEX `fk_BookedMeal_Chef`(`chefID`) USING BTREE,
-  INDEX `fk_BookedMeal_Meal`(`dishes`) USING BTREE,
-  INDEX `fk_BookedMeal_BookedRoom`(`bookedRoom_ID`) USING BTREE,
-  CONSTRAINT `fk_BookedMeal_BookedRoom` FOREIGN KEY (`bookedRoom_ID`) REFERENCES `bookedroom` (`bookedRoom_ID`) ON DELETE RESTRICT ON UPDATE RESTRICT,
-  CONSTRAINT `fk_BookedMeal_Chef` FOREIGN KEY (`chefID`) REFERENCES `chef` (`chefID`) ON DELETE RESTRICT ON UPDATE RESTRICT,
-  CONSTRAINT `fk_BookedMeal_Meal` FOREIGN KEY (`dishes`) REFERENCES `meal` (`dishes`) ON DELETE RESTRICT ON UPDATE RESTRICT
-) ENGINE = InnoDB AUTO_INCREMENT = 1 CHARACTER SET = utf8mb4 COLLATE = utf8mb4_0900_ai_ci ROW_FORMAT = Dynamic;
-
--- ----------------------------
--- Records of bookedmeal
--- ----------------------------
-
--- ----------------------------
--- Table structure for bookedroom
--- ----------------------------
-DROP TABLE IF EXISTS `bookedroom`;
-CREATE TABLE `bookedroom`  (
-  `bookedRoom_ID` int(0) UNSIGNED NOT NULL AUTO_INCREMENT,
-  `userID` int(0) UNSIGNED NOT NULL,
-  `roomID` int(0) UNSIGNED NOT NULL,
-  `checkInDate` date NOT NULL,
-  `checkOutDate` date NOT NULL,
-  `operationTime` timestamp(0) NOT NULL ON UPDATE CURRENT_TIMESTAMP(0),
-  PRIMARY KEY (`bookedRoom_ID`) USING BTREE,
-  INDEX `fk_BookedRoom_Guest`(`userID`) USING BTREE,
-  INDEX `fk_BookedRoom_Room`(`roomID`) USING BTREE,
-  CONSTRAINT `fk_BookedRoom_Guest` FOREIGN KEY (`userID`) REFERENCES `guest` (`userID`) ON DELETE RESTRICT ON UPDATE RESTRICT,
-  CONSTRAINT `fk_BookedRoom_Room` FOREIGN KEY (`roomID`) REFERENCES `room` (`roomID`) ON DELETE RESTRICT ON UPDATE RESTRICT
-) ENGINE = InnoDB AUTO_INCREMENT = 14 CHARACTER SET = utf8mb4 COLLATE = utf8mb4_0900_ai_ci ROW_FORMAT = Dynamic;
-
--- ----------------------------
--- Records of bookedroom
--- ----------------------------
-INSERT INTO `bookedroom` VALUES (2, 3, 210, '2020-05-06', '2020-05-22', '2020-05-05 12:38:51');
-INSERT INTO `bookedroom` VALUES (3, 4, 707, '2020-04-23', '2020-05-19', '2020-04-09 15:38:59');
-INSERT INTO `bookedroom` VALUES (13, 4, 113, '2020-05-15', '2020-05-15', '2020-05-13 17:07:05');
-INSERT INTO `bookedroom` VALUES (14, 6, 713, '2020-05-15', '2020-05-16', '2020-05-15 02:59:18');
-INSERT INTO `bookedroom` VALUES (16, 6, 913, '2020-05-15', '2020-12-01', '2020-05-15 03:11:56');
-INSERT INTO `bookedroom` VALUES (17, 6, 607, '2020-05-16', '2020-12-01', '2020-05-15 03:20:27');
-
--- ----------------------------
--- Table structure for chef
--- ----------------------------
+DROP TABLE IF EXISTS `schedule`;
+DROP TABLE IF EXISTS `meal`;
 DROP TABLE IF EXISTS `chef`;
-CREATE TABLE `chef`  (
-  `chefID` tinyint(0) UNSIGNED NOT NULL AUTO_INCREMENT,
-  `chefName` varchar(20) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NOT NULL,
-  PRIMARY KEY (`chefID`) USING BTREE
-) ENGINE = InnoDB AUTO_INCREMENT = 4 CHARACTER SET = utf8mb4 COLLATE = utf8mb4_0900_ai_ci ROW_FORMAT = Dynamic;
-
--- ----------------------------
--- Records of chef
--- ----------------------------
-INSERT INTO `chef` VALUES (1, 'Karen Adam');
-INSERT INTO `chef` VALUES (2, 'Hari Philip');
-INSERT INTO `chef` VALUES (3, 'Thalia Hensley');
-INSERT INTO `chef` VALUES (4, 'Nisha Moss');
-
--- ----------------------------
--- Table structure for future_room_info
--- ----------------------------
-DROP TABLE IF EXISTS `future_room_info`;
-CREATE TABLE `future_room_info`  (
-  `bookedRoom_ID` int(0) UNSIGNED NOT NULL,
-  `userID` int(0) UNSIGNED NOT NULL,
-  `roomID` int(0) UNSIGNED NOT NULL,
-  `checkInDate` date NOT NULL,
-  `checkOutDate` date NOT NULL,
-  `operationTime` timestamp(0) NOT NULL,
-  PRIMARY KEY (`bookedRoom_ID`) USING BTREE
-) ENGINE = InnoDB CHARACTER SET = utf8mb4 COLLATE = utf8mb4_0900_ai_ci ROW_FORMAT = Dynamic;
-
--- ----------------------------
--- Records of future_room_info
--- ----------------------------
-INSERT INTO `future_room_info` VALUES (1, 2, 113, '2020-05-16', '2020-05-18', '2020-05-13 05:36:02');
-INSERT INTO `future_room_info` VALUES (12, 7, 513, '2020-11-01', '2020-12-01', '2020-05-13 10:04:55');
-INSERT INTO `future_room_info` VALUES (15, 6, 913, '2020-11-05', '2020-11-20', '2020-05-15 03:05:30');
-
--- ----------------------------
--- Table structure for guest
--- ----------------------------
+DROP TABLE IF EXISTS `bookedroom`;
 DROP TABLE IF EXISTS `guest`;
-CREATE TABLE `guest`  (
-  `userID` int(0) UNSIGNED NOT NULL AUTO_INCREMENT,
-  `username` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NOT NULL,
-  `password` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NOT NULL,
-  `realName` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NOT NULL,
-  `passportID` varchar(9) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NOT NULL,
-  `telephoneNumber` bigint(0) UNSIGNED NOT NULL,
-  `email` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NULL DEFAULT '',
-  `operationTime` timestamp(0) NOT NULL ON UPDATE CURRENT_TIMESTAMP(0),
-  PRIMARY KEY (`userID`) USING BTREE,
-  UNIQUE INDEX `username`(`username`) USING BTREE
-) ENGINE = InnoDB AUTO_INCREMENT = 10 CHARACTER SET = utf8mb4 COLLATE = utf8mb4_0900_ai_ci ROW_FORMAT = Dynamic;
+DROP TABLE IF EXISTS `room`;
+DROP TABLE IF EXISTS `roomtype`;
 
--- ----------------------------
--- Records of guest
--- ----------------------------
+CREATE TABLE `guest`  (
+  `userID` int UNSIGNED PRIMARY KEY AUTO_INCREMENT,
+  `username` varchar(255) UNIQUE NOT NULL,
+  `password` varchar(255) NOT NULL,
+  `realName` varchar(255) NOT NULL,
+  `passportID` varchar(9) NOT NULL,
+  `telephoneNumber` bigint UNSIGNED NOT NULL,
+  `email` varchar(255) NULL DEFAULT '',
+  `operationTime` timestamp NOT NULL ON UPDATE CURRENT_TIMESTAMP
+);
+
 INSERT INTO `guest` VALUES (2, 'mika', '12345', 'mmm', 'ER102897', 222555666, '2579583@student.xjtlu.edu.cn', '2020-05-04 22:12:48');
 INSERT INTO `guest` VALUES (3, 'trigger', '123', 'mike-minjy', 'ER1252363', 18972634381, '26839586@qq.com', '2020-05-05 02:19:46');
 INSERT INTO `guest` VALUES (4, 'mikalon', '666', 'mika', 'QS553322', 59283098, '33322_dewd@mail.com', '2020-05-07 21:44:20');
@@ -139,22 +27,24 @@ INSERT INTO `guest` VALUES (7, 'minicap', '333666', 'mike simon', 'WCMM22233', 2
 INSERT INTO `guest` VALUES (8, 'muniku', '2333666', 'mikunika', 'EC233366', 222369796, '2333@qq.com', '2020-05-13 20:55:34');
 INSERT INTO `guest` VALUES (9, 'ssscc', 'w2', 'minitab', 'WEVE332', 12389795, '', '2020-05-11 11:05:49');
 
--- ----------------------------
--- Table structure for meal
--- ----------------------------
-DROP TABLE IF EXISTS `meal`;
-CREATE TABLE `meal`  (
-  `dishes` varchar(60) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NOT NULL,
-  `chefID` tinyint(0) UNSIGNED NOT NULL,
-  `price` float UNSIGNED NOT NULL,
-  INDEX `fk_Meal_Chef`(`chefID`) USING BTREE,
-  INDEX `dishes`(`dishes`) USING BTREE,
-  CONSTRAINT `fk_Meal_Chef` FOREIGN KEY (`chefID`) REFERENCES `chef` (`chefID`) ON DELETE RESTRICT ON UPDATE RESTRICT
-) ENGINE = InnoDB CHARACTER SET = utf8mb4 COLLATE = utf8mb4_0900_ai_ci ROW_FORMAT = Dynamic;
 
--- ----------------------------
--- Records of meal
--- ----------------------------
+CREATE TABLE `chef`  (
+  `chefID` tinyint UNSIGNED PRIMARY KEY AUTO_INCREMENT,
+  `chefName` varchar(20) NOT NULL
+);
+
+INSERT INTO `chef` VALUES (1, 'Karen Adam');
+INSERT INTO `chef` VALUES (2, 'Hari Philip');
+INSERT INTO `chef` VALUES (3, 'Thalia Hensley');
+INSERT INTO `chef` VALUES (4, 'Nisha Moss');
+
+CREATE TABLE `meal`  (
+  `dishes` varchar(60) NOT NULL,
+  `chefID` tinyint UNSIGNED NOT NULL,
+  `price` float UNSIGNED NOT NULL,
+  CONSTRAINT `fk_Meal_Chef` FOREIGN KEY (`chefID`) REFERENCES `chef` (`chefID`)
+);
+
 INSERT INTO `meal` VALUES ('Shrimp soup', 1, 0);
 INSERT INTO `meal` VALUES ('Cauliflower and mushroom stew', 1, 0);
 INSERT INTO `meal` VALUES ('spicy chicken nuggets', 1, 0);
@@ -184,47 +74,22 @@ INSERT INTO `meal` VALUES ('Pork Jiaozi', 4, 0);
 INSERT INTO `meal` VALUES ('Soy glazed pork chops', 4, 0);
 INSERT INTO `meal` VALUES ('curry rice', 4, 0);
 
--- ----------------------------
--- Table structure for overdue_room_info
--- ----------------------------
-DROP TABLE IF EXISTS `overdue_room_info`;
-CREATE TABLE `overdue_room_info`  (
-  `bookedRoom_ID` int(0) UNSIGNED NOT NULL,
-  `userID` int(0) UNSIGNED NOT NULL,
-  `roomID` int(0) UNSIGNED NOT NULL,
-  `checkInDate` date NOT NULL,
-  `checkOutDate` date NOT NULL,
-  `operationTime` timestamp(0) NOT NULL,
-  PRIMARY KEY (`bookedRoom_ID`) USING BTREE
-) ENGINE = InnoDB CHARACTER SET = utf8mb4 COLLATE = utf8mb4_0900_ai_ci ROW_FORMAT = Dynamic;
+CREATE TABLE `roomtype`  (
+  `roomTypeID` tinyint UNSIGNED PRIMARY KEY AUTO_INCREMENT,
+  `roomType` varchar(30) NOT NULL
+);
 
--- ----------------------------
--- Records of overdue_room_info
--- ----------------------------
-INSERT INTO `overdue_room_info` VALUES (4, 5, 906, '2020-05-06', '2020-05-14', '2020-05-13 13:59:42');
-INSERT INTO `overdue_room_info` VALUES (5, 2, 906, '2020-02-06', '2020-03-12', '2020-05-13 05:36:10');
-INSERT INTO `overdue_room_info` VALUES (6, 2, 505, '2020-03-20', '2020-04-16', '2020-05-13 05:37:35');
-INSERT INTO `overdue_room_info` VALUES (7, 7, 701, '2020-05-11', '2020-05-11', '2020-05-13 05:37:36');
-INSERT INTO `overdue_room_info` VALUES (8, 8, 313, '2020-05-11', '2020-05-11', '2020-05-13 05:37:38');
-INSERT INTO `overdue_room_info` VALUES (9, 9, 113, '2020-05-12', '2020-05-14', '2020-05-13 16:12:40');
-INSERT INTO `overdue_room_info` VALUES (10, 6, 804, '2020-05-12', '2020-05-12', '2020-05-13 05:37:41');
-INSERT INTO `overdue_room_info` VALUES (11, 5, 313, '2020-05-12', '2020-05-14', '2020-05-13 15:07:20');
+INSERT INTO `roomtype` VALUES (1, 'Large double bed');
+INSERT INTO `roomtype` VALUES (2, 'Large single bed');
+INSERT INTO `roomtype` VALUES (3, 'Small single bed');
+INSERT INTO `roomtype` VALUES (4, 'VIP Room');
 
--- ----------------------------
--- Table structure for room
--- ----------------------------
-DROP TABLE IF EXISTS `room`;
 CREATE TABLE `room`  (
-  `roomID` int(0) UNSIGNED NOT NULL,
-  `roomTypeID` tinyint(0) UNSIGNED NOT NULL,
-  PRIMARY KEY (`roomID`) USING BTREE,
-  INDEX `fk_Room_RoomType`(`roomTypeID`) USING BTREE,
-  CONSTRAINT `fk_Room_RoomType` FOREIGN KEY (`roomTypeID`) REFERENCES `roomtype` (`roomTypeID`) ON DELETE RESTRICT ON UPDATE RESTRICT
-) ENGINE = InnoDB CHARACTER SET = utf8mb4 COLLATE = utf8mb4_0900_ai_ci ROW_FORMAT = Dynamic;
+  `roomID` int UNSIGNED PRIMARY KEY,
+  `roomTypeID` tinyint UNSIGNED NOT NULL,
+  CONSTRAINT `fk_Room_RoomType` FOREIGN KEY (`roomTypeID`) REFERENCES `roomtype` (`roomTypeID`)
+);
 
--- ----------------------------
--- Records of room
--- ----------------------------
 INSERT INTO `room` VALUES (101, 1);
 INSERT INTO `room` VALUES (102, 1);
 INSERT INTO `room` VALUES (111, 1);
@@ -356,38 +221,64 @@ INSERT INTO `room` VALUES (813, 4);
 INSERT INTO `room` VALUES (913, 4);
 INSERT INTO `room` VALUES (1013, 4);
 
--- ----------------------------
--- Table structure for roomtype
--- ----------------------------
-DROP TABLE IF EXISTS `roomtype`;
-CREATE TABLE `roomtype`  (
-  `roomTypeID` tinyint(0) UNSIGNED NOT NULL AUTO_INCREMENT,
-  `roomType` varchar(30) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NOT NULL,
-  PRIMARY KEY (`roomTypeID`) USING BTREE
-) ENGINE = InnoDB AUTO_INCREMENT = 5 CHARACTER SET = utf8mb4 COLLATE = utf8mb4_0900_ai_ci ROW_FORMAT = Dynamic;
 
--- ----------------------------
--- Records of roomtype
--- ----------------------------
-INSERT INTO `roomtype` VALUES (1, 'Large double bed');
-INSERT INTO `roomtype` VALUES (2, 'Large single bed');
-INSERT INTO `roomtype` VALUES (3, 'Small single bed');
-INSERT INTO `roomtype` VALUES (4, 'VIP Room');
+CREATE TABLE `bookedroom`  (
+  `bookedRoom_ID` int UNSIGNED PRIMARY KEY AUTO_INCREMENT,
+  `userID` int UNSIGNED NOT NULL,
+  `roomID` int UNSIGNED NOT NULL,
+  `checkInDate` date NOT NULL,
+  `checkOutDate` date NOT NULL,
+  `operationTime` timestamp NOT NULL ON UPDATE CURRENT_TIMESTAMP,
+  CONSTRAINT `fk_BookedRoom_Guest` FOREIGN KEY (`userID`) REFERENCES `guest` (`userID`),
+  CONSTRAINT `fk_BookedRoom_Room` FOREIGN KEY (`roomID`) REFERENCES `room` (`roomID`)
+);
 
--- ----------------------------
--- Table structure for schedule
--- ----------------------------
-DROP TABLE IF EXISTS `schedule`;
+INSERT INTO `bookedroom` VALUES (1, 2, 113, '2020-05-16', '2020-05-18', '2020-05-13 05:36:02');
+INSERT INTO `bookedroom` VALUES (2, 3, 210, '2020-05-06', '2020-05-22', '2020-05-05 12:38:51');
+INSERT INTO `bookedroom` VALUES (3, 4, 707, '2020-04-23', '2020-05-19', '2020-04-09 15:38:59');
+INSERT INTO `bookedroom` VALUES (4, 5, 906, '2020-05-06', '2020-05-14', '2020-05-13 13:59:42');
+INSERT INTO `bookedroom` VALUES (5, 2, 906, '2020-02-06', '2020-03-12', '2020-05-13 05:36:10');
+INSERT INTO `bookedroom` VALUES (6, 2, 505, '2020-03-20', '2020-04-16', '2020-05-13 05:37:35');
+INSERT INTO `bookedroom` VALUES (7, 7, 701, '2020-05-11', '2020-05-11', '2020-05-13 05:37:36');
+INSERT INTO `bookedroom` VALUES (8, 8, 313, '2020-05-11', '2020-05-11', '2020-05-13 05:37:38');
+INSERT INTO `bookedroom` VALUES (9, 9, 113, '2020-05-12', '2020-05-14', '2020-05-13 16:12:40');
+INSERT INTO `bookedroom` VALUES (10, 6, 804, '2020-05-12', '2020-05-12', '2020-05-13 05:37:41');
+INSERT INTO `bookedroom` VALUES (11, 5, 313, '2020-05-12', '2020-05-14', '2020-05-13 15:07:20');
+INSERT INTO `bookedroom` VALUES (12, 7, 513, '2020-11-01', '2020-12-01', '2020-05-13 10:04:55');
+INSERT INTO `bookedroom` VALUES (13, 4, 113, '2020-05-15', '2020-05-15', '2020-05-13 17:07:05');
+INSERT INTO `bookedroom` VALUES (14, 6, 713, '2020-05-15', '2020-05-16', '2020-05-15 02:59:18');
+INSERT INTO `bookedroom` VALUES (15, 6, 913, '2020-11-05', '2020-11-20', '2020-05-15 03:05:30');
+INSERT INTO `bookedroom` VALUES (16, 6, 913, '2020-05-15', '2020-12-01', '2020-05-15 03:11:56');
+INSERT INTO `bookedroom` VALUES (17, 6, 607, '2020-05-16', '2020-12-01', '2020-05-15 03:20:27');
+INSERT INTO `bookedroom` VALUES (18, 6, 107, '2020-05-15', '2020-11-30', '2020-05-15 04:03:23');
+INSERT INTO `bookedroom` VALUES (19, 6, 310, '2020-05-15', '2020-11-29', '2020-05-15 04:13:43');
+
+DROP TABLE IF EXISTS `future_room_info`;
+CREATE TABLE `future_room_info`  (
+  `bookedRoom_ID` int UNSIGNED PRIMARY KEY,
+  `userID` int UNSIGNED NOT NULL,
+  `roomID` int UNSIGNED NOT NULL,
+  `checkInDate` date NOT NULL,
+  `checkOutDate` date NOT NULL,
+  `operationTime` timestamp NOT NULL
+);
+
+DROP TABLE IF EXISTS `overdue_room_info`;
+CREATE TABLE `overdue_room_info`  (
+  `bookedRoom_ID` int UNSIGNED PRIMARY KEY,
+  `userID` int UNSIGNED NOT NULL,
+  `roomID` int UNSIGNED NOT NULL,
+  `checkInDate` date NOT NULL,
+  `checkOutDate` date NOT NULL,
+  `operationTime` timestamp NOT NULL
+);
+
 CREATE TABLE `schedule`  (
-  `weekday` varchar(10) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NOT NULL,
-  `chefID` tinyint(0) UNSIGNED NOT NULL,
-  INDEX `fk_Schedule_Chef`(`chefID`) USING BTREE,
-  CONSTRAINT `fk_Schedule_Chef` FOREIGN KEY (`chefID`) REFERENCES `chef` (`chefID`) ON DELETE RESTRICT ON UPDATE RESTRICT
-) ENGINE = InnoDB CHARACTER SET = utf8mb4 COLLATE = utf8mb4_0900_ai_ci ROW_FORMAT = Dynamic;
+  `weekday` varchar(10) NOT NULL,
+  `chefID` tinyint UNSIGNED NOT NULL,
+  CONSTRAINT `fk_Schedule_Chef` FOREIGN KEY (`chefID`) REFERENCES `chef` (`chefID`)
+);
 
--- ----------------------------
--- Records of schedule
--- ----------------------------
 INSERT INTO `schedule` VALUES ('Monday', 1);
 INSERT INTO `schedule` VALUES ('Tuesday', 1);
 INSERT INTO `schedule` VALUES ('Wednesday', 1);
@@ -405,24 +296,26 @@ INSERT INTO `schedule` VALUES ('Tuesday', 4);
 INSERT INTO `schedule` VALUES ('Saturday', 4);
 INSERT INTO `schedule` VALUES ('Sunday', 4);
 
--- ----------------------------
--- Table structure for staff
--- ----------------------------
 DROP TABLE IF EXISTS `staff`;
 CREATE TABLE `staff`  (
-  `staffID` int(0) UNSIGNED NOT NULL AUTO_INCREMENT,
-  `username` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NOT NULL,
-  `password` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NOT NULL,
-  `telephoneNumber` bigint(0) UNSIGNED NOT NULL,
-  `operationTime` timestamp(0) NULL DEFAULT NULL ON UPDATE CURRENT_TIMESTAMP(0),
-  PRIMARY KEY (`staffID`) USING BTREE
-) ENGINE = InnoDB AUTO_INCREMENT = 4 CHARACTER SET = utf8mb4 COLLATE = utf8mb4_0900_ai_ci ROW_FORMAT = Dynamic;
+  `staffID` int UNSIGNED PRIMARY KEY AUTO_INCREMENT,
+  `username` varchar(255) NOT NULL,
+  `password` varchar(255) NOT NULL,
+  `telephoneNumber` bigint UNSIGNED NOT NULL,
+  `operationTime` timestamp NULL DEFAULT NULL ON UPDATE CURRENT_TIMESTAMP
+);
 
--- ----------------------------
--- Records of staff
--- ----------------------------
 INSERT INTO `staff` VALUES (1, 'mike', '2333666', 8615833356871, '2020-05-15 02:58:33');
 INSERT INTO `staff` VALUES (2, 'tiger', '2333', 987658632, '2020-05-14 02:58:47');
 INSERT INTO `staff` VALUES (3, 'scott', '111', 2123535768, '2020-05-09 10:03:31');
 
-SET FOREIGN_KEY_CHECKS = 1;
+CREATE TABLE `bookedmeal`  (
+  `bookedMeal_ID` int UNSIGNED PRIMARY KEY AUTO_INCREMENT,
+  `bookedRoom_ID` int NOT NULL,
+  `chefID` tinyint UNSIGNED NOT NULL,
+  `dishes` varchar(60) NOT NULL,
+  `orderDate` DATETIME NOT NULL,
+  `serveDate` DATETIME NOT NULL,
+  `count` int UNSIGNED NOT NULL DEFAULT 1,
+  `totalPrice` float UNSIGNED NOT NULL
+);
