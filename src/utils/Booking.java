@@ -423,7 +423,7 @@ public class Booking {
         }
     }
 
-    private static boolean checkBookedRoom(Connection connection,int BookedRoom_ID, int roomID, LocalDate checkInDate, LocalDate checkOutDate) throws Exception {
+    private static boolean checkBookedRoom(Connection connection, int BookedRoom_ID, int roomID, LocalDate checkInDate, LocalDate checkOutDate) throws Exception {
         PreparedStatement preparedStatement;
         ResultSet resultSet;
         boolean hasBeenBooked = false;
@@ -431,21 +431,21 @@ public class Booking {
 
 //        if (roomType_ID == 0) {
 //            sql = "SELECT * FROM Room LEFT OUTER JOIN BookedRoom USING (roomID) WHERE" +
-//                    " roomID IN(SELECT roomID FROM bookedroom WHERE (checkInDate >= ? AND checkOutDate <= ?)OR(checkInDate <= ? AND checkOutDate >= ?)OR(checkInDate <= ? AND checkOutDate >= ?)OR(checkInDate <= ? AND checkOutDate >= ?))" +
+//                    " roomID IN(SELECT roomID FROM BookedRoom WHERE (checkInDate >= ? AND checkOutDate <= ?)OR(checkInDate <= ? AND checkOutDate >= ?)OR(checkInDate <= ? AND checkOutDate >= ?)OR(checkInDate <= ? AND checkOutDate >= ?))" +
 //                    " AND bookedRoom_ID = ?";
 //            preparedStatement = connection.prepareStatement(sql);
 //            setData1(checkInDate, checkOutDate, preparedStatement);
 //            preparedStatement.setInt(9,BookedRoom_ID);
 //        } else {
-            sql = "SELECT * FROM Room LEFT OUTER JOIN BookedRoom USING (roomID) WHERE roomID = ?" +
-                    " AND bookedRoom_ID IN(SELECT bookedRoom_ID FROM bookedroom WHERE (checkInDate >= ? AND checkOutDate <= ?)OR(checkInDate <= ? AND checkOutDate >= ?)OR(checkInDate <= ? AND checkOutDate >= ?)OR(checkInDate <= ? AND checkOutDate >= ?))" +
-                    " AND bookedRoom_ID <> ?";
-            preparedStatement = connection.prepareStatement(sql);
-            preparedStatement.setInt(1, roomID);
-            preparedStatement.setDate(2, Date.valueOf(checkInDate));
-            setData2(checkOutDate, checkInDate, preparedStatement, Date.valueOf(checkInDate), Date.valueOf(checkOutDate));
-            preparedStatement.setDate(9, Date.valueOf(checkOutDate));
-            preparedStatement.setInt(10,BookedRoom_ID);
+        sql = "SELECT * FROM Room LEFT OUTER JOIN BookedRoom USING (roomID) WHERE roomID = ?" +
+                " AND bookedRoom_ID IN(SELECT bookedRoom_ID FROM bookedroom WHERE (checkInDate >= ? AND checkOutDate <= ?)OR(checkInDate <= ? AND checkOutDate >= ?)OR(checkInDate <= ? AND checkOutDate >= ?)OR(checkInDate <= ? AND checkOutDate >= ?))" +
+                " AND bookedRoom_ID <> ?";
+        preparedStatement = connection.prepareStatement(sql);
+        preparedStatement.setInt(1, roomID);
+        preparedStatement.setDate(2, Date.valueOf(checkInDate));
+        setData2(checkOutDate, checkInDate, preparedStatement, Date.valueOf(checkInDate), Date.valueOf(checkOutDate));
+        preparedStatement.setDate(9, Date.valueOf(checkOutDate));
+        preparedStatement.setInt(10, BookedRoom_ID);
 //        }
         resultSet = preparedStatement.executeQuery();
 
@@ -599,9 +599,9 @@ public class Booking {
                 }
             }
             if (LocalDate.of(year, month, day).isBefore(LocalDate.now())) {
-                System.out.println("=========================================");
-                System.out.println("You cannot specify the date before today.");
-                System.out.println("=========================================");
+                System.out.println("=====================================");
+                System.out.println("You cannot set the date before today.");
+                System.out.println("=====================================");
                 input = validDate(scanner);
                 continue;
             }
@@ -730,6 +730,7 @@ public class Booking {
                 System.out.println("============================================================================");
             } else {
                 String username = resultSet.getString("Username");
+                Scanner scanner=new Scanner(System.in);
                 connection.setAutoCommit(false);
                 outerLoop:
                 while (true) {
@@ -740,26 +741,7 @@ public class Booking {
                     System.out.println();
                     System.out.println("Username: " + username);
                     System.out.println("Your booked future live in room listed as below:");
-                    resultSet.beforeFirst();
-                    if (resultSet.next()) {
-                        resultSet.beforeFirst();
-                        while (resultSet.next()) {
-                            orderCodes[index] = resultSet.getInt(2);//put order code into an array.
-                            index++;
-                            System.out.println("*************************** " + resultSet.getRow() + ". row ***************************");
-                            for (int i = 2; i <= resultSet.getMetaData().getColumnCount(); i++) {
-                                System.out.println(resultSet.getMetaData().getColumnLabel(i) + ": " + resultSet.getString(i));
-                            }
-                        }
-                        System.out.println("*************************** end row ***************************");
-                    } else {
-                        System.out.println("*********");
-                        System.out.println("Empty Set");
-                        System.out.println("*********");
-                    }
-                    System.out.println();
-
-                    Scanner scanner = new Scanner(System.in);
+                    printBookedRooms(resultSet, orderCodes, index);
                     System.out.println("You can modify the check-in date of a specific room now.");
                     System.out.println("Type in \"Return\" back to the previous page.");
                     System.out.println("Type in \"Save\" to submit all changes.");
@@ -779,10 +761,18 @@ public class Booking {
                                 case "1":
                                 case "save changes":
                                     connection.commit();
+                                    System.out.println();
+                                    System.out.println("-----------------------------");
+                                    System.out.println("Your changes have been saved.");
+                                    System.out.println("-----------------------------");
                                     break outerLoop;
                                 case "2":
                                 case "cancel changes":
                                     connection.rollback();
+                                    System.out.println();
+                                    System.out.println("--------------------------------");
+                                    System.out.println("Your changes have been canceled.");
+                                    System.out.println("--------------------------------");
                                     break outerLoop;
                                 case "3":
                                 case "continue modifying":
@@ -822,10 +812,18 @@ public class Booking {
                             case "1":
                             case "save changes":
                                 connection.commit();
+                                System.out.println();
+                                System.out.println("-----------------------------");
+                                System.out.println("Your changes have been saved.");
+                                System.out.println("-----------------------------");
                                 break outerLoop;
                             case "2":
                             case "cancel changes":
                                 connection.rollback();
+                                System.out.println();
+                                System.out.println("--------------------------------");
+                                System.out.println("Your changes have been canceled.");
+                                System.out.println("--------------------------------");
                                 break outerLoop;
                             case "3":
                             case "continue modifying":
@@ -843,7 +841,7 @@ public class Booking {
                                 break;
                         }
                     }
-                    while (checkBookedRoom(connection,Integer.parseInt(input), resultSet.getInt("roomID"), newCheckInDate, resultSet.getDate("checkOutDate").toLocalDate())
+                    while (checkBookedRoom(connection, Integer.parseInt(input), resultSet.getInt("roomID"), newCheckInDate, resultSet.getDate("checkOutDate").toLocalDate())
                             || newCheckInDate.isAfter(resultSet.getDate("checkOutDate").toLocalDate())) {
                         if (newCheckInDate.isAfter(resultSet.getDate("checkOutDate").toLocalDate())) {
                             System.out.println("==================================================");
@@ -855,7 +853,7 @@ public class Booking {
                             System.out.print("Please type in other check-in date and try again: ");
                         }
                         newLiveInDate = scanner.nextLine().trim().toLowerCase();
-                        if (newLiveInDate.equals("return")){
+                        if (newLiveInDate.equals("return")) {
                             sql = "SELECT username AS 'Username',bookedRoom_ID AS 'Order Code',roomID AS 'Room ID',checkInDate AS 'Check-in Date',checkOutDate AS 'Check-out Date'" +
                                     "FROM bookedroom LEFT OUTER JOIN Guest USING (userID) WHERE checkInDate > ? AND userID = ?";
                             preparedStatement = connection.prepareStatement(sql, ResultSet.TYPE_SCROLL_INSENSITIVE, ResultSet.CONCUR_UPDATABLE);
@@ -919,18 +917,159 @@ public class Booking {
                 System.out.println("If you have left a room, we hope you will live in Sunny Isle again in the future.");
                 System.out.println("=================================================================================");
             } else {
-                resultSet.first();
-                System.out.println();
-                System.out.println("Username: " + resultSet.getString(1));
-                System.out.println("Your living hotel room listed as below:");
-                resultSet.beforeFirst();
-                while (resultSet.next()) {
-                    System.out.println("*************************** " + resultSet.getRow() + ". row ***************************");
-                    for (int i = 2; i <= resultSet.getMetaData().getColumnCount(); i++) {
-                        System.out.println(resultSet.getMetaData().getColumnLabel(i) + ": " + resultSet.getString(i));
+                String username = resultSet.getString("Username");
+                Scanner scanner=new Scanner(System.in);
+                connection.setAutoCommit(false);
+                outerLoop:
+                while (true) {
+                    resultSet.last();
+                    int[] orderCodes = new int[resultSet.getRow()];
+                    int index = 0;
+
+                    System.out.println();
+                    System.out.println("Username: " + username);
+                    System.out.println("Your living hotel room listed as below:");
+                    printBookedRooms(resultSet, orderCodes, index);
+                    System.out.println("You can modify the check-out date of a specific room now.");
+                    System.out.println("Type in \"Return\" back to the previous page.");
+                    System.out.println("Type in \"Save\" to submit all changes.");
+                    System.out.print("Please type in the Order Code which you want to modify the check-out date: ");
+                    String input = scanner.nextLine().trim().toLowerCase();
+                    while (true) {
+                        Pattern pattern = Pattern.compile("^[0-9]{1,10}$");
+                        if (input.equals("return") || input.equals("save")) {
+                            System.out.println("---------------------");
+                            System.out.println("1. Save changes");
+                            System.out.println("2. Cancel changes");
+                            System.out.println("3. Continue modifying");
+                            System.out.println("---------------------");
+                            System.out.print("Please choose an option to continue: ");
+                            input = scanner.nextLine().trim().toLowerCase();
+                            switch (input) {
+                                case "1":
+                                case "save changes":
+                                    connection.commit();
+                                    System.out.println();
+                                    System.out.println("-----------------------------");
+                                    System.out.println("Your changes have been saved.");
+                                    System.out.println("-----------------------------");
+                                    break outerLoop;
+                                case "2":
+                                case "cancel changes":
+                                    connection.rollback();
+                                    System.out.println();
+                                    System.out.println("--------------------------------");
+                                    System.out.println("Your changes have been canceled.");
+                                    System.out.println("--------------------------------");
+                                    break outerLoop;
+                                case "3":
+                                case "continue modifying":
+                                    System.out.println("------------------------------");
+                                    System.out.print("Please type in the Order Code: ");
+                                    input = scanner.nextLine().trim().toLowerCase();
+                                    break;
+                            }
+                        } else if (!pattern.matcher(input).matches() || !codesContains(orderCodes, Integer.parseInt(input))) {
+                            System.out.println("==================================");
+                            System.out.print("Please type in a valid order code: ");
+                            input = scanner.nextLine().trim().toLowerCase();
+                        } else {
+                            break;
+                        }
                     }
+                    sql = "SELECT roomID,roomTypeID,userID,checkInDate,checkOutDate FROM room LEFT OUTER JOIN bookedroom USING (roomID)" +
+                            " WHERE userID = " + userID + " AND bookedRoom_ID = " + Integer.parseInt(input);
+                    resultSet = preparedStatement.executeQuery(sql);
+                    resultSet.next();
+
+                    System.out.println("-------------------------------------------------------------");
+                    System.out.println("Notice: The date regulation is the same as booking a room.");
+                    System.out.println("Click [Enter] to set the check-out day same as check-in date.");
+                    System.out.print("Please type in the new leave date: ");
+                    String newLeaveDate = scanner.nextLine().trim().toLowerCase();
+                    LocalDate newCheckOutDate = getValidDate(scanner, newLeaveDate, false);
+                    if (newCheckOutDate == LocalDate.MIN) {
+                        newCheckOutDate = resultSet.getDate("checkInDate").toLocalDate();
+                    }
+                    while (newCheckOutDate == null) {
+                        System.out.println("---------------------");
+                        System.out.println("1. Save changes");
+                        System.out.println("2. Cancel changes");
+                        System.out.println("3. Continue modifying");
+                        System.out.println("---------------------");
+                        System.out.print("Please choose an option to continue: ");
+                        newLeaveDate = scanner.nextLine().trim().toLowerCase();
+                        switch (newLeaveDate) {
+                            case "1":
+                            case "save changes":
+                                connection.commit();
+                                System.out.println();
+                                System.out.println("-----------------------------");
+                                System.out.println("Your changes have been saved.");
+                                System.out.println("-----------------------------");
+                                break outerLoop;
+                            case "2":
+                            case "cancel changes":
+                                connection.rollback();
+                                System.out.println();
+                                System.out.println("--------------------------------");
+                                System.out.println("Your changes have been canceled.");
+                                System.out.println("--------------------------------");
+                                break outerLoop;
+                            case "3":
+                            case "continue modifying":
+                                sql = "SELECT username AS 'Username',bookedRoom_ID AS 'Order Code',roomID AS 'Room ID',checkInDate AS 'Check-in Date',checkOutDate AS 'Check-out Date'" +
+                                        "FROM bookedroom LEFT OUTER JOIN Guest USING (userID) WHERE checkOutDate >= ? AND userID = ?";
+                                preparedStatement = connection.prepareStatement(sql, ResultSet.TYPE_SCROLL_INSENSITIVE, ResultSet.CONCUR_UPDATABLE);
+                                preparedStatement.setDate(1, Date.valueOf(LocalDate.now()));
+                                preparedStatement.setInt(2, userID);
+                                resultSet = preparedStatement.executeQuery();
+                                continue outerLoop;
+                            default:
+                                System.out.println("==============================");
+                                System.out.println("Please type in a valid option.");
+                                System.out.println("==============================");
+                                break;
+                        }
+                    }
+                    while (checkBookedRoom(connection, Integer.parseInt(input)/*BookedRoom_ID*/, resultSet.getInt("roomID"), resultSet.getDate("checkInDate").toLocalDate(), newCheckOutDate)) {
+//                        || newCheckOutDate.isBefore(LocalDate.now())){//It's not necessary
+//                        if (newCheckOutDate.isBefore(LocalDate.now())) {
+//                            System.out.println("===========================================");
+//                            System.out.println("The check-out date cannot set before today.");
+//                            System.out.print("Please type in a valid check-out date: ");
+//                        } else {
+                            System.out.println("==================================================");
+                            System.out.println("There exists other guest living in this period.");
+                            System.out.print("Please type in other check-out date and try again: ");
+//                        }
+                        newLeaveDate = scanner.nextLine().trim().toLowerCase();
+                        if (newLeaveDate.equals("return")) {
+                            sql = "SELECT username AS 'Username',bookedRoom_ID AS 'Order Code',roomID AS 'Room ID',checkInDate AS 'Check-in Date',checkOutDate AS 'Check-out Date'" +
+                                    "FROM bookedroom LEFT OUTER JOIN Guest USING (userID) WHERE checkOutDate >= ? AND userID = ?";
+                            preparedStatement = connection.prepareStatement(sql, ResultSet.TYPE_SCROLL_INSENSITIVE, ResultSet.CONCUR_UPDATABLE);
+                            preparedStatement.setDate(1, Date.valueOf(LocalDate.now()));
+                            preparedStatement.setInt(2, userID);
+                            resultSet = preparedStatement.executeQuery();
+                            continue outerLoop;
+                        }
+                        newCheckOutDate = getValidDate(scanner, newLeaveDate, false);
+                    }
+
+                    sql = "UPDATE BookedRoom SET checkOutDate = ? WHERE bookedRoom_ID = ? AND userID = ?";
+                    preparedStatement = connection.prepareStatement(sql);
+                    preparedStatement.setDate(1, Date.valueOf(newCheckOutDate));
+                    preparedStatement.setInt(2, Integer.parseInt(input));
+                    preparedStatement.setInt(3, userID);
+                    preparedStatement.executeUpdate();
+
+                    sql = "SELECT username AS 'Username',bookedRoom_ID AS 'Order Code',roomID AS 'Room ID',checkInDate AS 'Check-in Date',checkOutDate AS 'Check-out Date'" +
+                            "FROM bookedroom LEFT OUTER JOIN Guest USING (userID) WHERE checkOutDate >= ? AND userID = ?";
+                    preparedStatement = connection.prepareStatement(sql, ResultSet.TYPE_SCROLL_INSENSITIVE, ResultSet.CONCUR_UPDATABLE);
+                    preparedStatement.setDate(1, Date.valueOf(LocalDate.now()));
+                    preparedStatement.setInt(2, userID);
+                    resultSet = preparedStatement.executeQuery();
                 }
-                System.out.println("*************************** end row ***************************");
             }
         } catch (Exception e) {
             e.printStackTrace();
@@ -938,6 +1077,27 @@ public class Booking {
             DB_Utility.close(connection, preparedStatement, resultSet);
         }
         return userInfo;
+    }
+
+    private static void printBookedRooms(ResultSet resultSet, int[] orderCodes, int index) throws Exception {
+        resultSet.beforeFirst();
+        if (resultSet.next()) {
+            resultSet.beforeFirst();
+            while (resultSet.next()) {
+                orderCodes[index] = resultSet.getInt(2);//put order code into an array.
+                index++;
+                System.out.println("*************************** " + resultSet.getRow() + ". row ***************************");
+                for (int i = 2; i <= resultSet.getMetaData().getColumnCount(); i++) {
+                    System.out.println(resultSet.getMetaData().getColumnLabel(i) + ": " + resultSet.getString(i));
+                }
+            }
+            System.out.println("*************************** end row ***************************");
+        } else {
+            System.out.println("*********");
+            System.out.println("Empty Set");
+            System.out.println("*********");
+        }
+        System.out.println();
     }
 
     public static int[] cancelBookedRoom(int userID) {
@@ -963,6 +1123,7 @@ public class Booking {
                 System.out.println("==================================================================================================");
             } else {
                 String username = resultSet.getString("Username");
+                Scanner scanner=new Scanner(System.in);
                 connection.setAutoCommit(false);
                 outerLoop:
                 while (true) {
@@ -973,26 +1134,7 @@ public class Booking {
                     System.out.println("Username: " + username);
                     System.out.println();
                     System.out.println("Your booked future live in room listed as below:");
-                    resultSet.beforeFirst();
-                    if (resultSet.next()) {
-                        resultSet.beforeFirst();
-                        while (resultSet.next()) {
-                            orderCodes[index] = resultSet.getInt(2);//put order code into an array.
-                            index++;
-                            System.out.println("*************************** " + resultSet.getRow() + ". row ***************************");
-                            for (int i = 2; i <= resultSet.getMetaData().getColumnCount(); i++) {
-                                System.out.println(resultSet.getMetaData().getColumnLabel(i) + ": " + resultSet.getString(i));
-                            }
-                        }
-                        System.out.println("*************************** end row ***************************");
-                    } else {
-                        System.out.println("*********");
-                        System.out.println("Empty Set");
-                        System.out.println("*********");
-                    }
-
-                    System.out.println();
-                    Scanner scanner = new Scanner(System.in);
+                    printBookedRooms(resultSet, orderCodes, index);
                     System.out.println("You can type in the Order Code to cancel that booking.");
                     System.out.println("You can type in \"Return\" back to the previous page.");
                     System.out.println("Type in \"Save\" to submit all changes.");
@@ -1012,10 +1154,18 @@ public class Booking {
                                 case "1":
                                 case "save changes":
                                     connection.commit();
+                                    System.out.println();
+                                    System.out.println("-----------------------------");
+                                    System.out.println("Your changes have been saved.");
+                                    System.out.println("-----------------------------");
                                     break outerLoop;
                                 case "2":
                                 case "cancel changes":
                                     connection.rollback();
+                                    System.out.println();
+                                    System.out.println("--------------------------------");
+                                    System.out.println("Your changes have been canceled.");
+                                    System.out.println("--------------------------------");
                                     break outerLoop;
                                 case "3":
                                 case "continue modifying":
