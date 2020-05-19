@@ -4,7 +4,9 @@ import java.sql.*;
 import java.sql.Date;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
-import java.util.*;
+import java.util.HashMap;
+import java.util.Scanner;
+import java.util.Map;
 import java.util.regex.Pattern;
 
 public class Booking {
@@ -551,9 +553,8 @@ public class Booking {
                 continue;
             }
             if (date.length == 2) {
-                Calendar getDate = Calendar.getInstance();
-                String stringYear = String.valueOf(getDate.get(Calendar.YEAR));
-                input = stringYear + "-" + input;
+                int intYear = LocalDate.now().getYear();
+                input = intYear + "-" + input;
                 date = input.split("[-/_. ]");
             }
             year = Integer.parseInt(date[0]);
@@ -659,7 +660,7 @@ public class Booking {
         DB_Utility.printCurrentTime();
         int[] userInfo = {10, userID};
         //Set the room cannot be canceled after guest leaved hotel
-        //If guest leave hotel before check-out date, the end date will automatically set to leave date
+        //If guest wants to leave hotel before check-out date, they can modify the check-out date
         //the record cannot be "deleted" after guest live in the hotel
         Scanner scanner = new Scanner(System.in);
         System.out.println("1. Modify Check-in Date");
@@ -1032,17 +1033,17 @@ public class Booking {
                                 break;
                         }
                     }
-                    while (checkBookedRoom(connection, Integer.parseInt(input)/*BookedRoom_ID*/, resultSet.getInt("roomID"), resultSet.getDate("checkInDate").toLocalDate(), newCheckOutDate)) {
-//                        || newCheckOutDate.isBefore(LocalDate.now())){//It's not necessary
-//                        if (newCheckOutDate.isBefore(LocalDate.now())) {
-//                            System.out.println("===========================================");
-//                            System.out.println("The check-out date cannot set before today.");
-//                            System.out.print("Please type in a valid check-out date: ");
-//                        } else {
+                    while (checkBookedRoom(connection, Integer.parseInt(input)/*BookedRoom_ID*/, resultSet.getInt("roomID"), resultSet.getDate("checkInDate").toLocalDate(), newCheckOutDate)
+                        || newCheckOutDate.isBefore(resultSet.getDate("checkInDate").toLocalDate())){
+                        if (newCheckOutDate.isBefore(resultSet.getDate("checkInDate").toLocalDate())) {
+                            System.out.println("=======================================================");
+                            System.out.println("You cannot set the check-out date before check-in date.");
+                            System.out.print("Please type in a valid check-out date: ");
+                        } else {
                             System.out.println("==================================================");
                             System.out.println("There exists other guest living in this period.");
                             System.out.print("Please type in other check-out date and try again: ");
-//                        }
+                        }
                         newLeaveDate = scanner.nextLine().trim().toLowerCase();
                         if (newLeaveDate.equals("return")) {
                             sql = "SELECT username AS 'Username',bookedRoom_ID AS 'Order Code',roomID AS 'Room ID',checkInDate AS 'Check-in Date',checkOutDate AS 'Check-out Date'" +
@@ -1212,7 +1213,7 @@ public class Booking {
     }
 
     private static boolean codesContains(int[] orderCodes, int input) {
-        if (orderCodes.length == 0) return false;
+        if (orderCodes.length == 0) return false;//Empty set cannot have any order code
         for (int eachCode : orderCodes) {
             if (eachCode == input) {
                 return true;//The array contains the input order code.

@@ -40,8 +40,9 @@ public class StaffOperation {
         int[] staffInfo = {2, staffID};
         Scanner scanner = new Scanner(System.in);
         System.out.println("1. Check Rooms");
+//        System.out.println("2. Check Meal");//(Might be developed later)
         System.out.println("2. Change Password");
-        System.out.println("3. Add to Black List (Might be developed later)");
+        System.out.println("3. Add to Black List");//(Might be developed later)
         System.out.println("4. Log out");
         System.out.println("5. quit the system");
         System.out.println();
