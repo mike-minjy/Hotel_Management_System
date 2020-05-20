@@ -22,7 +22,7 @@ public class HMS {
 //            This method will backup the overdue booked room information to another table.
 //            It will also get the current bookedRoom information from future_room_info table,
 //            and put the future booked room information to future_room_info table.
-//            Booking.backupInfo();
+//            Booking.backupInfo();//It is deprecated after the improvement of SQL.
             processing();
 
             System.out.println("Bye");

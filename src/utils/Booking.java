@@ -1,12 +1,16 @@
 package utils;
 
-import java.sql.*;
+import java.sql.Connection;
 import java.sql.Date;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.time.LocalTime;
 import java.time.format.DateTimeFormatter;
 import java.util.HashMap;
-import java.util.Scanner;
 import java.util.Map;
+import java.util.Scanner;
 import java.util.regex.Pattern;
 
 public class Booking {
@@ -529,7 +533,7 @@ public class Booking {
     }
 
     private static LocalDate getValidDate(Scanner scanner, String input, boolean isCheckInDate) {
-        Pattern pattern = Pattern.compile("^[-/_. 0-9]{1,18}$");
+        Pattern pattern = Pattern.compile("^[-/_. 0-9]{1,10}$");
         int year, month, day;
         loopFlag:
         while (true) {
@@ -731,7 +735,7 @@ public class Booking {
                 System.out.println("============================================================================");
             } else {
                 String username = resultSet.getString("Username");
-                Scanner scanner=new Scanner(System.in);
+                Scanner scanner = new Scanner(System.in);
                 connection.setAutoCommit(false);
                 outerLoop:
                 while (true) {
@@ -919,7 +923,7 @@ public class Booking {
                 System.out.println("=================================================================================");
             } else {
                 String username = resultSet.getString("Username");
-                Scanner scanner=new Scanner(System.in);
+                Scanner scanner = new Scanner(System.in);
                 connection.setAutoCommit(false);
                 outerLoop:
                 while (true) {
@@ -1034,7 +1038,7 @@ public class Booking {
                         }
                     }
                     while (checkBookedRoom(connection, Integer.parseInt(input)/*BookedRoom_ID*/, resultSet.getInt("roomID"), resultSet.getDate("checkInDate").toLocalDate(), newCheckOutDate)
-                        || newCheckOutDate.isBefore(resultSet.getDate("checkInDate").toLocalDate())){
+                            || newCheckOutDate.isBefore(resultSet.getDate("checkInDate").toLocalDate())) {
                         if (newCheckOutDate.isBefore(resultSet.getDate("checkInDate").toLocalDate())) {
                             System.out.println("=======================================================");
                             System.out.println("You cannot set the check-out date before check-in date.");
@@ -1124,7 +1128,7 @@ public class Booking {
                 System.out.println("==================================================================================================");
             } else {
                 String username = resultSet.getString("Username");
-                Scanner scanner=new Scanner(System.in);
+                Scanner scanner = new Scanner(System.in);
                 connection.setAutoCommit(false);
                 outerLoop:
                 while (true) {
@@ -1228,7 +1232,168 @@ public class Booking {
         //No matter ordinary customer or guest of hotel can book meal in the hotel, but guest can get 20% discount.
         //ordinary customer bookedRoom_ID will set to NULL
         int[] userInfo = {10, userID};
+        System.out.println("Sunny Isles Hotel provides various of meal.");
+        System.out.println("You can obtain a 20% discount for the total price of booked meal.");
+        System.out.println("-------------------------------------------");
+        System.out.println("1. Book the meal for the day after tomorrow");
+        System.out.println("2. Living in the hotel at that time");
+        System.out.println("-------------------------------------------");
+        System.out.println("If you are consistent with all these condition, congratulations!");
+        System.out.println("The chef workday listed in the float window.");
+        int maxRowOfMeal = printChefAndMeal();
+        Scanner scanner = new Scanner(System.in);
+        System.out.print("You can type in the corresponding Row Number to select meal of specific chef: ");
+        String mealAndChef = scanner.nextLine().trim().toLowerCase();
+        Pattern pattern = Pattern.compile("^[0-9]{1,9}$");
+        while (true) {
+            if (mealAndChef.equals("return")) {
+                return userInfo;
+            } else if (!pattern.matcher(mealAndChef).matches() || Integer.parseInt(mealAndChef) > maxRowOfMeal) {
+                System.out.println("============================================================");
+                System.out.println("(Notice: You cannot click [Enter] to select meal in random.)");
+                System.out.print("Please type in a valid Row Number: ");
+                mealAndChef = scanner.nextLine().trim().toLowerCase();
+            } else {
+                break;
+            }
+        }
+        System.out.println("----------------------------------------------------");
+        System.out.println("The weekday of chefs are listed in the float window.");
+        System.out.println("You can reference the table for your meal booking.");
+        System.out.println("----------------------------------------------------");
+        printWeekdayOfChefs();
+        while (true) {
+            System.out.println("(Notice: If you do not set a date, system will set the serve date as today.)");
+            System.out.println("(If you set the serve date as today, you cannot get the 20% discount.)");
+            System.out.print("Please type in the date of serve date: ");
+            String stringServeDateTime = scanner.nextLine().trim();
+            if (stringServeDateTime.equalsIgnoreCase("Return")) return userInfo;//Exit meal booking
+            LocalDate serveDate = getValidDate(scanner, stringServeDateTime, true);
+            if (serveDate == null) continue;
+            System.out.println("---------------------------------------------------------------------------------------------------");
+            System.out.println("(Notice: The time format is \"Hour:Minute(:Second)\")");
+            System.out.println("(\"Second\" is not necessary to fill in.)");
+            System.out.println("(If you click [Enter] to skip it, the time will be set to 17:30 if your current time is afternoon.)");
+            System.out.println("(Similarly: morning --> 7:30, forenoon --> 12:30, night snack --> 21:00)");
+            System.out.println("(The meal is only available between 7:00 and 22:00, late order will set time to the next date.)");
+            System.out.print("Please type in the time that you want to enjoy the meal: ");
+            stringServeDateTime = scanner.nextLine().trim();
+            if (stringServeDateTime.equalsIgnoreCase("Return")) return userInfo;//Exit meal booking
+            LocalTime serveTime = getValidTime(scanner, stringServeDateTime);
+            if (serveTime == null) {
+                continue;
+            } else if (serveTime == LocalTime.MIDNIGHT) {
+                serveDate = serveDate.plusDays(1);
+                serveTime = LocalTime.of(7, 30, 0);
+            }
+            LocalDateTime serveDateTime = LocalDateTime.of(serveDate, serveTime);
+            if (serveDateTime.isBefore(LocalDateTime.now())) {
+                System.out.println("========================================");
+                System.out.println("You cannot set the Date&Time before now.");
+                System.out.println("========================================");
+                continue;
+            }
+            //how many dishes they want?
+            System.out.println("-------------------");
+            System.out.println("Order succeed");
+            System.out.println("------------------");
+            break;
+        }
         return userInfo;
+    }
+
+    private static LocalTime getValidTime(Scanner scanner, String serveTime) {
+        Pattern pattern = Pattern.compile("^[-:_/. 0-9]{1,8}$");
+        int hour, minute, second;
+        loopFlag:
+        while (true) {
+            String[] time = serveTime.split("[-:_/. ]");
+            if (serveTime.equalsIgnoreCase("Return")) {
+                return null;
+            }
+            if (serveTime.isEmpty()) {
+                if (LocalTime.now().isBefore(LocalTime.of(7, 30, 0))) {
+                    return LocalTime.of(7, 30, 0);
+                } else if (LocalTime.now().isBefore(LocalTime.of(12, 30, 0))) {
+                    return LocalTime.of(12, 30, 0);
+                } else if (LocalTime.now().isBefore(LocalTime.of(17, 30, 0))) {
+                    return LocalTime.of(17, 30, 0);
+                } else if (LocalTime.now().isBefore(LocalTime.of(21, 0, 0))) {
+                    return LocalTime.of(21, 0, 0);
+                } else {
+                    return LocalTime.MIDNIGHT;
+                }
+            }
+            for (String each : time) {
+                if (each.isEmpty()) {
+                    serveTime = validTime(scanner);
+                    continue loopFlag;
+                }
+            }
+            if (!pattern.matcher(serveTime).matches() || !(time.length == 3 || time.length == 2)) {
+                serveTime = validTime(scanner);
+                continue;
+            }
+            if (time.length == 2) {
+                int intSecond = 0;
+                serveTime = serveTime + "-" + intSecond;
+                time = serveTime.split("[-:_/. ]");
+            }
+            hour = Integer.parseInt(time[0]);
+            minute = Integer.parseInt(time[1]);
+            second = Integer.parseInt(time[2]);
+            if (second > 59 || second < 0) {//Check whether it is a valid second input
+                if (second == 60) {
+                    minute += 1;
+                    second = 0;
+                } else {
+                    serveTime = validTime(scanner);
+                    continue;
+                }
+            }
+            if (minute > 59 || minute < 0) {//Check whether it is a valid minute input
+                if (minute == 60) {
+                    hour += 1;
+                    minute = 0;
+                } else {
+                    serveTime = validTime(scanner);
+                    continue;
+                }
+            }
+            if (hour > 21 || hour < 6) {//Check whether it is a valid hour input
+                if ((hour > 0 && hour < 7) || (hour > 21 && hour < 24) || (hour == 24 && minute == 0 && second == 0)) {
+                    System.out.println("========================================================");
+                    System.out.println("The Food Service is only available between 7:00 to 22:00");
+                    System.out.println("========================================================");
+                    System.out.print("Please choose another time: ");
+                    serveTime = scanner.nextLine().trim();
+                } else {
+                    serveTime = validTime(scanner);
+                }
+                continue;
+            }
+            break;
+        }
+        return LocalTime.of(hour, minute, second);
+    }
+
+    private static String validTime(Scanner scanner) {
+        System.out.println("============================");
+        System.out.print("Please type in a valid time: ");
+        return scanner.nextLine().trim();
+    }
+
+    private static void printWeekdayOfChefs() {
+        String sql = "SELECT weekday AS 'Weekday', chefName AS 'Chef Name' FROM `schedule` NATURAL JOIN chef";
+        TablePrinter.display(sql, "The weekday of chefs");
+        System.out.println();
+    }
+
+    private static int printChefAndMeal() {
+        String sql = "SELECT dishesType_ID AS 'Row Number',chefName AS 'Chef Name', dishes AS 'Dishes', price AS 'Price per Dish' FROM meal NATURAL JOIN chef";
+        int maxRow = TablePrinter.display(sql, "Chefs with corresponding Dishes, and Price of Dishes");
+        System.out.println();
+        return maxRow;
     }
 
     public static int[] cancelMeal(int userID) {
