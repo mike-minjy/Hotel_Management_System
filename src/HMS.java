@@ -139,16 +139,16 @@ public class HMS {
                     break;
                 case 18:
                     System.out.println();
+                    userInformation = StaffOperation.mealManagement(ID);
+                    step = (byte) userInformation[0];
+                    ID = userInformation[1];
+                    break;
+                case 19:
+                    System.out.println();
                     userInformation = StaffOperation.changePassword(ID);
                     step = (byte) userInformation[0];
                     ID = userInformation[1];
                     break;
-//                case 19:
-//                    System.out.println();
-//                    userInformation = StaffOperation.addBlackList(ID);
-//                    step = (byte) userInformation[0];
-//                    ID = userInformation[1];
-//                    break;
                 case 20:
                     System.out.println();
                     userInformation = Booking.modifyLiveInDate(ID);

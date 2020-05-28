@@ -40,9 +40,8 @@ public class StaffOperation {
         int[] staffInfo = {2, staffID};
         Scanner scanner = new Scanner(System.in);
         System.out.println("1. Check Rooms");
-//        System.out.println("2. Check Meal");//(Might be developed later)
-        System.out.println("2. Change Password");
-        System.out.println("3. Add to Black List");//(Might be developed later)
+        System.out.println("2. Check Meals");//(Might be developed later)
+        System.out.println("3. Change Password");
         System.out.println("4. Log out");
         System.out.println("5. quit the system");
         System.out.println();
@@ -56,13 +55,13 @@ public class StaffOperation {
                     staffInfo[0] = 17;
                     return staffInfo;
                 case "2":
-                case "change password":
+                case "check meals":
                     staffInfo[0] = 18;
                     return staffInfo;
-//                case "3":
-//                case "add to black list":
-//                    staffInfo[0] = 19;
-//                    return staffInfo;
+                case "3":
+                case "change password":
+                    staffInfo[0] = 19;
+                    return staffInfo;
                 case "4":
                 case "log out":
                     return staffInfo;
@@ -197,8 +196,7 @@ public class StaffOperation {
         }
     }
 
-    //Maybe I will develop a function of adding blacklist
-    public static int[] addBlackList(int staffID) {
+    public static int[] mealManagement(int staffID) {
         DB_Utility.printCurrentTime();
         int[] staffInfo = {16, staffID};
         return staffInfo;

@@ -511,6 +511,7 @@ public class Booking {
         PreparedStatement preparedStatement = null;
         try {
             connection = DB_Utility.connect();
+
             String sql = "INSERT INTO BookedRoom (userID, roomID, checkInDate, checkOutDate, operationTime) VALUES (?,?,?,?,NOW())";
             preparedStatement = connection.prepareStatement(sql, ResultSet.TYPE_SCROLL_INSENSITIVE, ResultSet.CONCUR_UPDATABLE);
 
@@ -1343,18 +1344,18 @@ public class Booking {
             minute = Integer.parseInt(time[1]);
             second = Integer.parseInt(time[2]);
             if (second > 59 || second < 0) {//Check whether it is a valid second input
-                if (second == 60) {
+                if (second >= 60) {
                     minute += 1;
-                    second = 0;
+                    second -= 60;
                 } else {
                     serveTime = validTime(scanner);
                     continue;
                 }
             }
             if (minute > 59 || minute < 0) {//Check whether it is a valid minute input
-                if (minute == 60) {
+                if (minute >= 60) {
                     hour += 1;
-                    minute = 0;
+                    minute -= 60;
                 } else {
                     serveTime = validTime(scanner);
                     continue;
