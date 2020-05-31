@@ -1,35 +1,56 @@
-DROP TABLE IF EXISTS `bookedmeal`;
-DROP TABLE IF EXISTS `schedule`;
-DROP TABLE IF EXISTS `meal`;
-DROP TABLE IF EXISTS `chef`;
-DROP TABLE IF EXISTS `bookedroom`;
-DROP TABLE IF EXISTS `guest`;
-DROP TABLE IF EXISTS `room`;
-DROP TABLE IF EXISTS `roomtype`;
+SET FOREIGN_KEY_CHECKS = 0;
 
-CREATE TABLE `guest`  (
-  `userID` int UNSIGNED PRIMARY KEY AUTO_INCREMENT,
-  `username` varchar(255) UNIQUE NOT NULL,
-  `password` varchar(255) NOT NULL,
-  `realName` varchar(255) NOT NULL,
-  `passportID` varchar(9) NOT NULL,
-  `telephoneNumber` bigint UNSIGNED NOT NULL,
-  `email` varchar(255) NULL DEFAULT '',
-  `operationTime` timestamp NOT NULL ON UPDATE CURRENT_TIMESTAMP
+DROP TABLE IF EXISTS `bookedmeal`;
+CREATE TABLE `bookedmeal`  (
+  `bookedMeal_ID` INT UNSIGNED PRIMARY KEY AUTO_INCREMENT,
+  `bookedRoom_ID` INT UNSIGNED NULL DEFAULT NULL,
+  `dishesType_ID` INT UNSIGNED NULL DEFAULT NULL,
+  `weekday_ID` INT UNSIGNED NULL DEFAULT NULL,
+  `orderDate` DATETIME NOT NULL,
+  `serveDate` DATETIME NOT NULL,
+  `count` INT UNSIGNED NOT NULL DEFAULT 1,
+  `totalPrice` FLOAT UNSIGNED NOT NULL,
+  CONSTRAINT `fk_BookedMeal_BookedRoom` FOREIGN KEY (`bookedRoom_ID`) REFERENCES `bookedroom` (`bookedRoom_ID`),
+  CONSTRAINT `fk_BookedMeal_Meal` FOREIGN KEY (`dishesType_ID`) REFERENCES `meal` (`dishesType_ID`),
+  CONSTRAINT `fk_BookedMeal_Schedule` FOREIGN KEY (`weekday_ID`) REFERENCES `schedule` (`weekday_ID`)
 );
 
-INSERT INTO `guest` VALUES (2, 'mika', '12345', 'mmm', 'ER102897', 222555666, '2579583@student.xjtlu.edu.cn', '2020-05-04 22:12:48');
-INSERT INTO `guest` VALUES (3, 'trigger', '123', 'mike-minjy', 'ER1252363', 18972634381, '26839586@qq.com', '2020-05-05 02:19:46');
-INSERT INTO `guest` VALUES (4, 'mikalon', '666', 'mika', 'QS553322', 59283098, '33322_dewd@mail.com', '2020-05-07 21:44:20');
-INSERT INTO `guest` VALUES (5, 'ayasaki', '23335', 'miuki', 'NS9365605', 1223366778, NULL, '2020-05-08 22:35:02');
-INSERT INTO `guest` VALUES (6, 'timi', '12356', 'smalion', 'WC33567', 123563216, NULL, '2020-05-11 12:50:03');
-INSERT INTO `guest` VALUES (7, 'minicap', '333666', 'mike simon', 'WCMM22233', 22222256, '2553755@123.com', '2020-05-11 14:58:55');
-INSERT INTO `guest` VALUES (8, 'muniku', '2333666', 'mikunika', 'EC233366', 222369796, '2333@qq.com', '2020-05-13 20:55:34');
-INSERT INTO `guest` VALUES (9, 'ssscc', 'w2', 'minitab', 'WEVE332', 12389795, '', '2020-05-11 11:05:49');
+DROP TABLE IF EXISTS `bookedroom`;
+CREATE TABLE `bookedroom`  (
+  `bookedRoom_ID` INT UNSIGNED PRIMARY KEY AUTO_INCREMENT,
+  `userID` INT UNSIGNED NOT NULL,
+  `roomID` INT UNSIGNED NOT NULL,
+  `checkInDate` DATE NOT NULL,
+  `checkOutDate` DATE NOT NULL,
+  `operationTime` timestamp NOT NULL ON UPDATE CURRENT_TIMESTAMP,
+  CONSTRAINT `fk_BookedRoom_Guest` FOREIGN KEY (`userID`) REFERENCES `guest` (`userID`),
+  CONSTRAINT `fk_BookedRoom_Room` FOREIGN KEY (`roomID`) REFERENCES `room` (`roomID`)
+);
 
+INSERT INTO `bookedroom` VALUES (1, 2, 113, '2020-05-16', '2020-05-18', '2020-05-13 05:36:02');
+INSERT INTO `bookedroom` VALUES (2, 3, 210, '2020-05-06', '2020-05-22', '2020-05-05 12:38:51');
+INSERT INTO `bookedroom` VALUES (3, 4, 707, '2020-04-23', '2020-05-19', '2020-04-09 15:38:59');
+INSERT INTO `bookedroom` VALUES (4, 5, 906, '2020-05-06', '2020-05-14', '2020-05-13 13:59:42');
+INSERT INTO `bookedroom` VALUES (5, 2, 906, '2020-02-06', '2020-03-12', '2020-05-13 05:36:10');
+INSERT INTO `bookedroom` VALUES (6, 2, 505, '2020-03-20', '2020-04-16', '2020-05-13 05:37:35');
+INSERT INTO `bookedroom` VALUES (7, 7, 701, '2020-05-11', '2020-05-11', '2020-05-13 05:37:36');
+INSERT INTO `bookedroom` VALUES (8, 8, 313, '2020-05-11', '2020-05-11', '2020-05-13 05:37:38');
+INSERT INTO `bookedroom` VALUES (9, 9, 113, '2020-05-12', '2020-05-14', '2020-05-13 16:12:40');
+INSERT INTO `bookedroom` VALUES (10, 6, 804, '2020-05-12', '2020-05-12', '2020-05-13 05:37:41');
+INSERT INTO `bookedroom` VALUES (11, 5, 313, '2020-05-12', '2020-05-14', '2020-05-13 15:07:20');
+INSERT INTO `bookedroom` VALUES (12, 7, 513, '2020-11-01', '2020-12-01', '2020-05-13 10:04:55');
+INSERT INTO `bookedroom` VALUES (13, 4, 113, '2020-05-15', '2020-05-15', '2020-05-13 17:07:05');
+INSERT INTO `bookedroom` VALUES (14, 6, 713, '2020-05-15', '2020-05-16', '2020-05-15 02:59:18');
+INSERT INTO `bookedroom` VALUES (15, 6, 913, '2020-11-05', '2020-11-20', '2020-05-15 03:05:30');
+INSERT INTO `bookedroom` VALUES (16, 6, 913, '2020-05-15', '2020-11-01', '2020-05-15 03:11:56');
+INSERT INTO `bookedroom` VALUES (17, 6, 607, '2020-05-16', '2020-12-01', '2020-05-15 03:20:27');
+INSERT INTO `bookedroom` VALUES (18, 6, 107, '2020-05-15', '2020-11-30', '2020-05-15 04:03:23');
+INSERT INTO `bookedroom` VALUES (19, 6, 310, '2020-05-15', '2020-11-29', '2020-05-15 04:13:43');
+INSERT INTO `bookedroom` VALUES (28, 6, 513, '2020-05-18', '2020-05-18', '2020-05-18 00:20:58');
 
+DROP TABLE IF EXISTS `chef`;
 CREATE TABLE `chef`  (
-  `chefID` tinyint UNSIGNED PRIMARY KEY AUTO_INCREMENT,
+  `chefID` TINYINT UNSIGNED PRIMARY KEY AUTO_INCREMENT,
   `chefName` varchar(20) NOT NULL
 );
 
@@ -38,55 +59,70 @@ INSERT INTO `chef` VALUES (2, 'Hari Philip');
 INSERT INTO `chef` VALUES (3, 'Thalia Hensley');
 INSERT INTO `chef` VALUES (4, 'Nisha Moss');
 
+DROP TABLE IF EXISTS `guest`;
+CREATE TABLE `guest`  (
+  `userID` INT UNSIGNED PRIMARY KEY AUTO_INCREMENT,
+  `username` varchar(255) UNIQUE NOT NULL,
+  `password` varchar(255) NOT NULL,
+  `realName` varchar(255) NOT NULL,
+  `passportID` varchar(9) NOT NULL,
+  `telephoneNumber` BIGINT UNSIGNED NOT NULL,
+  `email` varchar(255) NULL DEFAULT '',
+  `operationTime` timestamp NOT NULL ON UPDATE CURRENT_TIMESTAMP
+);
+
+INSERT INTO `guest` VALUES (1, 'test', '123', 'zzz', 'TEST123', 123456789, '2579583@test.com', '2020-04-23 22:12:48');
+INSERT INTO `guest` VALUES (2, 'mika', '12345', 'mmm', 'ER102897', 222555666, '2579583@student.xjtlu.edu.cn', '2020-05-04 22:12:48');
+INSERT INTO `guest` VALUES (3, 'trigger', '123', 'mitimana', 'ER1252363', 18972634381, '26839586@qq.com', '2020-05-05 02:19:46');
+INSERT INTO `guest` VALUES (4, 'mikalon', '666', 'mika', 'QS553322', 59283098, '33322_dewd@mail.com', '2020-05-07 21:44:20');
+INSERT INTO `guest` VALUES (5, 'sikali', '23335', 'miuki', 'NS9365605', 1223366778, '', '2020-05-08 22:35:02');
+INSERT INTO `guest` VALUES (6, 'timi', '12356', 'smalion', 'EC335678', 123563216, '', '2020-05-17 20:49:49');
+INSERT INTO `guest` VALUES (7, 'minicap', '333666', 'mike simon', 'WCMM22233', 22222256, '2553755@123.com', '2020-05-11 14:58:55');
+INSERT INTO `guest` VALUES (8, 'muniku', '2333666', 'mikunika', 'EC233366', 222369796, '2333@qq.com', '2020-05-13 20:55:34');
+INSERT INTO `guest` VALUES (9, 'ssscc', 'w2', 'minitab', 'WEVE332', 12389795, '', '2020-05-11 11:05:49');
+
+DROP TABLE IF EXISTS `meal`;
 CREATE TABLE `meal`  (
+  `dishesType_ID` INT UNSIGNED PRIMARY KEY AUTO_INCREMENT,
+  `chefID` TINYINT UNSIGNED NOT NULL,
   `dishes` varchar(60) NOT NULL,
-  `chefID` tinyint UNSIGNED NOT NULL,
   `price` float UNSIGNED NOT NULL,
   CONSTRAINT `fk_Meal_Chef` FOREIGN KEY (`chefID`) REFERENCES `chef` (`chefID`)
 );
 
-INSERT INTO `meal` VALUES ('Shrimp soup', 1, 0);
-INSERT INTO `meal` VALUES ('Cauliflower and mushroom stew', 1, 0);
-INSERT INTO `meal` VALUES ('spicy chicken nuggets', 1, 0);
-INSERT INTO `meal` VALUES ('steamed cod fish', 1, 0);
-INSERT INTO `meal` VALUES ('turkey burger', 1, 0);
-INSERT INTO `meal` VALUES ('veggie burger', 1, 0);
-INSERT INTO `meal` VALUES ('fried egg', 1, 0);
-INSERT INTO `meal` VALUES ('Chicken curry', 2, 0);
-INSERT INTO `meal` VALUES ('Chicken masala', 2, 0);
-INSERT INTO `meal` VALUES ('Mutton Korma', 2, 0);
-INSERT INTO `meal` VALUES ('Keema Curry', 2, 0);
-INSERT INTO `meal` VALUES ('Mushroom Tikka', 2, 0);
-INSERT INTO `meal` VALUES ('fried egg', 2, 0);
-INSERT INTO `meal` VALUES ('curry rice', 2, 0);
-INSERT INTO `meal` VALUES ('Tofu teriyaki', 3, 0);
-INSERT INTO `meal` VALUES ('Shrimp Tempura', 3, 0);
-INSERT INTO `meal` VALUES ('Yaki Udon', 3, 0);
-INSERT INTO `meal` VALUES ('Chicken Katsu', 3, 0);
-INSERT INTO `meal` VALUES ('Salmon sashimi', 3, 0);
-INSERT INTO `meal` VALUES ('fried egg', 3, 0);
-INSERT INTO `meal` VALUES ('curry rice', 3, 0);
-INSERT INTO `meal` VALUES ('Black pepper beef', 4, 0);
-INSERT INTO `meal` VALUES ('Pork chowmein', 4, 0);
-INSERT INTO `meal` VALUES ('Sweet & sour pork', 4, 0);
-INSERT INTO `meal` VALUES ('Gongbao chicken', 4, 0);
-INSERT INTO `meal` VALUES ('Pork Jiaozi', 4, 0);
-INSERT INTO `meal` VALUES ('Soy glazed pork chops', 4, 0);
-INSERT INTO `meal` VALUES ('curry rice', 4, 0);
+INSERT INTO `meal` VALUES (1, 1, 'Shrimp soup', 5);
+INSERT INTO `meal` VALUES (2, 1, 'Cauliflower and mushroom stew', 3);
+INSERT INTO `meal` VALUES (3, 1, 'spicy chicken nuggets', 6);
+INSERT INTO `meal` VALUES (4, 1, 'steamed cod fish', 8);
+INSERT INTO `meal` VALUES (5, 1, 'turkey burger', 10);
+INSERT INTO `meal` VALUES (6, 1, 'veggie burger', 7);
+INSERT INTO `meal` VALUES (7, 1, 'fried egg', 2);
+INSERT INTO `meal` VALUES (8, 2, 'Chicken curry', 5);
+INSERT INTO `meal` VALUES (9, 2, 'Chicken masala', 5);
+INSERT INTO `meal` VALUES (10, 2, 'Mutton Korma', 8);
+INSERT INTO `meal` VALUES (11, 2, 'Keema Curry', 5);
+INSERT INTO `meal` VALUES (12, 2, 'Mushroom Tikka', 6);
+INSERT INTO `meal` VALUES (13, 2, 'fried egg', 2);
+INSERT INTO `meal` VALUES (14, 2, 'curry rice', 3);
+INSERT INTO `meal` VALUES (15, 3, 'Tofu teriyaki', 6);
+INSERT INTO `meal` VALUES (16, 3, 'Shrimp Tempura', 7);
+INSERT INTO `meal` VALUES (17, 3, 'Yaki Udon', 6);
+INSERT INTO `meal` VALUES (18, 3, 'Chicken Katsu', 6);
+INSERT INTO `meal` VALUES (19, 3, 'Salmon sashimi', 9);
+INSERT INTO `meal` VALUES (20, 3, 'fried egg', 2);
+INSERT INTO `meal` VALUES (21, 3, 'curry rice', 3);
+INSERT INTO `meal` VALUES (22, 4, 'Black pepper beef', 9);
+INSERT INTO `meal` VALUES (23, 4, 'Pork chowmein', 8);
+INSERT INTO `meal` VALUES (24, 4, 'Sweet & sour pork', 8);
+INSERT INTO `meal` VALUES (25, 4, 'Gongbao chicken', 7);
+INSERT INTO `meal` VALUES (26, 4, 'Pork Jiaozi', 8);
+INSERT INTO `meal` VALUES (27, 4, 'Soy glazed pork chops', 7);
+INSERT INTO `meal` VALUES (28, 4, 'curry rice', 3);
 
-CREATE TABLE `roomtype`  (
-  `roomTypeID` tinyint UNSIGNED PRIMARY KEY AUTO_INCREMENT,
-  `roomType` varchar(30) NOT NULL
-);
-
-INSERT INTO `roomtype` VALUES (1, 'Large double bed');
-INSERT INTO `roomtype` VALUES (2, 'Large single bed');
-INSERT INTO `roomtype` VALUES (3, 'Small single bed');
-INSERT INTO `roomtype` VALUES (4, 'VIP Room');
-
+DROP TABLE IF EXISTS `room`;
 CREATE TABLE `room`  (
-  `roomID` int UNSIGNED PRIMARY KEY,
-  `roomTypeID` tinyint UNSIGNED NOT NULL,
+  `roomID` INT UNSIGNED PRIMARY KEY,
+  `roomTypeID` TINYINT UNSIGNED NOT NULL,
   CONSTRAINT `fk_Room_RoomType` FOREIGN KEY (`roomTypeID`) REFERENCES `roomtype` (`roomTypeID`)
 );
 
@@ -221,101 +257,53 @@ INSERT INTO `room` VALUES (813, 4);
 INSERT INTO `room` VALUES (913, 4);
 INSERT INTO `room` VALUES (1013, 4);
 
-
-CREATE TABLE `bookedroom`  (
-  `bookedRoom_ID` int UNSIGNED PRIMARY KEY AUTO_INCREMENT,
-  `userID` int UNSIGNED NOT NULL,
-  `roomID` int UNSIGNED NOT NULL,
-  `checkInDate` date NOT NULL,
-  `checkOutDate` date NOT NULL,
-  `operationTime` timestamp NOT NULL ON UPDATE CURRENT_TIMESTAMP,
-  CONSTRAINT `fk_BookedRoom_Guest` FOREIGN KEY (`userID`) REFERENCES `guest` (`userID`),
-  CONSTRAINT `fk_BookedRoom_Room` FOREIGN KEY (`roomID`) REFERENCES `room` (`roomID`)
+DROP TABLE IF EXISTS `roomtype`;
+CREATE TABLE `roomtype`  (
+  `roomTypeID` TINYINT UNSIGNED PRIMARY KEY AUTO_INCREMENT,
+  `roomType` varchar(30) NOT NULL
 );
 
-INSERT INTO `bookedroom` VALUES (1, 2, 113, '2020-05-16', '2020-05-18', '2020-05-13 05:36:02');
-INSERT INTO `bookedroom` VALUES (2, 3, 210, '2020-05-06', '2020-05-22', '2020-05-05 12:38:51');
-INSERT INTO `bookedroom` VALUES (3, 4, 707, '2020-04-23', '2020-05-19', '2020-04-09 15:38:59');
-INSERT INTO `bookedroom` VALUES (4, 5, 906, '2020-05-06', '2020-05-14', '2020-05-13 13:59:42');
-INSERT INTO `bookedroom` VALUES (5, 2, 906, '2020-02-06', '2020-03-12', '2020-05-13 05:36:10');
-INSERT INTO `bookedroom` VALUES (6, 2, 505, '2020-03-20', '2020-04-16', '2020-05-13 05:37:35');
-INSERT INTO `bookedroom` VALUES (7, 7, 701, '2020-05-11', '2020-05-11', '2020-05-13 05:37:36');
-INSERT INTO `bookedroom` VALUES (8, 8, 313, '2020-05-11', '2020-05-11', '2020-05-13 05:37:38');
-INSERT INTO `bookedroom` VALUES (9, 9, 113, '2020-05-12', '2020-05-14', '2020-05-13 16:12:40');
-INSERT INTO `bookedroom` VALUES (10, 6, 804, '2020-05-12', '2020-05-12', '2020-05-13 05:37:41');
-INSERT INTO `bookedroom` VALUES (11, 5, 313, '2020-05-12', '2020-05-14', '2020-05-13 15:07:20');
-INSERT INTO `bookedroom` VALUES (12, 7, 513, '2020-11-01', '2020-12-01', '2020-05-13 10:04:55');
-INSERT INTO `bookedroom` VALUES (13, 4, 113, '2020-05-15', '2020-05-15', '2020-05-13 17:07:05');
-INSERT INTO `bookedroom` VALUES (14, 6, 713, '2020-05-15', '2020-05-16', '2020-05-15 02:59:18');
-INSERT INTO `bookedroom` VALUES (15, 6, 913, '2020-11-05', '2020-11-20', '2020-05-15 03:05:30');
-INSERT INTO `bookedroom` VALUES (16, 6, 913, '2020-05-15', '2020-12-01', '2020-05-15 03:11:56');
-INSERT INTO `bookedroom` VALUES (17, 6, 607, '2020-05-16', '2020-12-01', '2020-05-15 03:20:27');
-INSERT INTO `bookedroom` VALUES (18, 6, 107, '2020-05-15', '2020-11-30', '2020-05-15 04:03:23');
-INSERT INTO `bookedroom` VALUES (19, 6, 310, '2020-05-15', '2020-11-29', '2020-05-15 04:13:43');
+INSERT INTO `roomtype` VALUES (1, 'Large double bed');
+INSERT INTO `roomtype` VALUES (2, 'Large single bed');
+INSERT INTO `roomtype` VALUES (3, 'Small single bed');
+INSERT INTO `roomtype` VALUES (4, 'VIP Room');
 
-DROP TABLE IF EXISTS `future_room_info`;
-CREATE TABLE `future_room_info`  (
-  `bookedRoom_ID` int UNSIGNED PRIMARY KEY,
-  `userID` int UNSIGNED NOT NULL,
-  `roomID` int UNSIGNED NOT NULL,
-  `checkInDate` date NOT NULL,
-  `checkOutDate` date NOT NULL,
-  `operationTime` timestamp NOT NULL
-);
-
-DROP TABLE IF EXISTS `overdue_room_info`;
-CREATE TABLE `overdue_room_info`  (
-  `bookedRoom_ID` int UNSIGNED PRIMARY KEY,
-  `userID` int UNSIGNED NOT NULL,
-  `roomID` int UNSIGNED NOT NULL,
-  `checkInDate` date NOT NULL,
-  `checkOutDate` date NOT NULL,
-  `operationTime` timestamp NOT NULL
-);
-
+DROP TABLE IF EXISTS `schedule`;
 CREATE TABLE `schedule`  (
+  `weekday_ID` INT UNSIGNED PRIMARY KEY AUTO_INCREMENT,
   `weekday` varchar(10) NOT NULL,
-  `chefID` tinyint UNSIGNED NOT NULL,
+  `chefID` TINYINT UNSIGNED NOT NULL,
   CONSTRAINT `fk_Schedule_Chef` FOREIGN KEY (`chefID`) REFERENCES `chef` (`chefID`)
 );
 
-INSERT INTO `schedule` VALUES ('Monday', 1);
-INSERT INTO `schedule` VALUES ('Tuesday', 1);
-INSERT INTO `schedule` VALUES ('Wednesday', 1);
-INSERT INTO `schedule` VALUES ('Thursday', 1);
-INSERT INTO `schedule` VALUES ('Friday', 1);
-INSERT INTO `schedule` VALUES ('Wednesday', 2);
-INSERT INTO `schedule` VALUES ('Thursday', 2);
-INSERT INTO `schedule` VALUES ('Friday', 2);
-INSERT INTO `schedule` VALUES ('Saturday', 2);
-INSERT INTO `schedule` VALUES ('Sunday', 2);
-INSERT INTO `schedule` VALUES ('Monday', 3);
-INSERT INTO `schedule` VALUES ('Thursday', 3);
-INSERT INTO `schedule` VALUES ('Saturday', 3);
-INSERT INTO `schedule` VALUES ('Tuesday', 4);
-INSERT INTO `schedule` VALUES ('Saturday', 4);
-INSERT INTO `schedule` VALUES ('Sunday', 4);
+INSERT INTO `schedule` VALUES (1, 'Monday', 1);
+INSERT INTO `schedule` VALUES (2, 'Tuesday', 1);
+INSERT INTO `schedule` VALUES (3, 'Wednesday', 1);
+INSERT INTO `schedule` VALUES (4, 'Thursday', 1);
+INSERT INTO `schedule` VALUES (5, 'Friday', 1);
+INSERT INTO `schedule` VALUES (6, 'Wednesday', 2);
+INSERT INTO `schedule` VALUES (7, 'Thursday', 2);
+INSERT INTO `schedule` VALUES (8, 'Friday', 2);
+INSERT INTO `schedule` VALUES (9, 'Saturday', 2);
+INSERT INTO `schedule` VALUES (10, 'Sunday', 2);
+INSERT INTO `schedule` VALUES (11, 'Monday', 3);
+INSERT INTO `schedule` VALUES (12, 'Thursday', 3);
+INSERT INTO `schedule` VALUES (13, 'Saturday', 3);
+INSERT INTO `schedule` VALUES (14, 'Tuesday', 4);
+INSERT INTO `schedule` VALUES (15, 'Saturday', 4);
+INSERT INTO `schedule` VALUES (16, 'Sunday', 4);
 
 DROP TABLE IF EXISTS `staff`;
 CREATE TABLE `staff`  (
-  `staffID` int UNSIGNED PRIMARY KEY AUTO_INCREMENT,
+  `staffID` INT UNSIGNED PRIMARY KEY AUTO_INCREMENT,
   `username` varchar(255) NOT NULL,
   `password` varchar(255) NOT NULL,
-  `telephoneNumber` bigint UNSIGNED NOT NULL,
+  `telephoneNumber` BIGINT UNSIGNED NOT NULL,
   `operationTime` timestamp NULL DEFAULT NULL ON UPDATE CURRENT_TIMESTAMP
 );
 
 INSERT INTO `staff` VALUES (1, 'mike', '2333666', 8615833356871, '2020-05-15 02:58:33');
-INSERT INTO `staff` VALUES (2, 'tiger', '2333', 987658632, '2020-05-14 02:58:47');
+INSERT INTO `staff` VALUES (2, 'tigger', '2333', 987658632, '2020-05-19 20:58:08');
 INSERT INTO `staff` VALUES (3, 'scott', '111', 2123535768, '2020-05-09 10:03:31');
 
-CREATE TABLE `bookedmeal`  (
-  `bookedMeal_ID` int UNSIGNED PRIMARY KEY AUTO_INCREMENT,
-  `bookedRoom_ID` int NOT NULL,
-  `chefID` tinyint UNSIGNED NOT NULL,
-  `dishes` varchar(60) NOT NULL,
-  `orderDate` DATETIME NOT NULL,
-  `serveDate` DATETIME NOT NULL,
-  `count` int UNSIGNED NOT NULL DEFAULT 1,
-  `totalPrice` float UNSIGNED NOT NULL
-);
+SET FOREIGN_KEY_CHECKS = 1;

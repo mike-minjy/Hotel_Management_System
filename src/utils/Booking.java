@@ -1229,7 +1229,6 @@ public class Booking {
 
     public static int[] bookMeal(int userID) {
         DB_Utility.printCurrentTime();
-        //Maybe add price or count in bookedMeal table
         //No matter ordinary customer or guest of hotel can book meal in the hotel, but guest can get 20% discount.
         //ordinary customer bookedRoom_ID will set to NULL
         int[] userInfo = {10, userID};
@@ -1249,9 +1248,14 @@ public class Booking {
         while (true) {
             if (mealAndChef.equals("return")) {
                 return userInfo;
+            }else if (mealAndChef.equals("show")){
+                printChefAndMeal();
+                System.out.print("You can type in the corresponding Row Number to select meal of specific chef: ");
+                mealAndChef = scanner.nextLine().trim().toLowerCase();
             } else if (!pattern.matcher(mealAndChef).matches() || Integer.parseInt(mealAndChef) > maxRowOfMeal) {
-                System.out.println("============================================================");
+                System.out.println("==================================================================");
                 System.out.println("(Notice: You cannot click [Enter] to select meal in random.)");
+                System.out.println("If you have closed the window, type in \"Show\" to display it again.");
                 System.out.print("Please type in a valid Row Number: ");
                 mealAndChef = scanner.nextLine().trim().toLowerCase();
             } else {
