@@ -11,7 +11,7 @@
  Target Server Version : 80020
  File Encoding         : 65001
 
- Date: 21/05/2020 02:50:04
+ Date: 01/06/2020 04:42:52
 */
 
 SET NAMES utf8mb4;
@@ -37,7 +37,7 @@ CREATE TABLE `bookedmeal`  (
   CONSTRAINT `fk_BookedMeal_BookedRoom` FOREIGN KEY (`bookedRoom_ID`) REFERENCES `bookedroom` (`bookedRoom_ID`) ON DELETE RESTRICT ON UPDATE RESTRICT,
   CONSTRAINT `fk_BookedMeal_Meal` FOREIGN KEY (`dishesType_ID`) REFERENCES `meal` (`dishesType_ID`) ON DELETE RESTRICT ON UPDATE RESTRICT,
   CONSTRAINT `fk_BookedMeal_Schedule` FOREIGN KEY (`weekday_ID`) REFERENCES `schedule` (`weekday_ID`) ON DELETE RESTRICT ON UPDATE RESTRICT
-) ENGINE = InnoDB AUTO_INCREMENT = 1 CHARACTER SET = utf8mb4 COLLATE = utf8mb4_0900_ai_ci ROW_FORMAT = Dynamic;
+) ENGINE = InnoDB CHARACTER SET = utf8mb4 COLLATE = utf8mb4_0900_ai_ci ROW_FORMAT = Dynamic;
 
 -- ----------------------------
 -- Records of bookedmeal
@@ -59,7 +59,7 @@ CREATE TABLE `bookedroom`  (
   INDEX `fk_BookedRoom_Room`(`roomID`) USING BTREE,
   CONSTRAINT `fk_BookedRoom_Guest` FOREIGN KEY (`userID`) REFERENCES `guest` (`userID`) ON DELETE RESTRICT ON UPDATE RESTRICT,
   CONSTRAINT `fk_BookedRoom_Room` FOREIGN KEY (`roomID`) REFERENCES `room` (`roomID`) ON DELETE RESTRICT ON UPDATE RESTRICT
-) ENGINE = InnoDB AUTO_INCREMENT = 29 CHARACTER SET = utf8mb4 COLLATE = utf8mb4_0900_ai_ci ROW_FORMAT = Dynamic;
+) ENGINE = InnoDB AUTO_INCREMENT = 28 CHARACTER SET = utf8mb4 COLLATE = utf8mb4_0900_ai_ci ROW_FORMAT = Dynamic;
 
 -- ----------------------------
 -- Records of bookedroom
@@ -101,7 +101,7 @@ CREATE TABLE `chef`  (
   `chefID` tinyint(0) UNSIGNED NOT NULL AUTO_INCREMENT,
   `chefName` varchar(20) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NOT NULL,
   PRIMARY KEY (`chefID`) USING BTREE
-) ENGINE = InnoDB AUTO_INCREMENT = 5 CHARACTER SET = utf8mb4 COLLATE = utf8mb4_0900_ai_ci ROW_FORMAT = Dynamic;
+) ENGINE = InnoDB AUTO_INCREMENT = 4 CHARACTER SET = utf8mb4 COLLATE = utf8mb4_0900_ai_ci ROW_FORMAT = Dynamic;
 
 -- ----------------------------
 -- Records of chef
@@ -126,7 +126,7 @@ CREATE TABLE `guest`  (
   `operationTime` timestamp(0) NOT NULL ON UPDATE CURRENT_TIMESTAMP(0),
   PRIMARY KEY (`userID`) USING BTREE,
   UNIQUE INDEX `username`(`username`) USING BTREE
-) ENGINE = InnoDB AUTO_INCREMENT = 10 CHARACTER SET = utf8mb4 COLLATE = utf8mb4_0900_ai_ci ROW_FORMAT = Dynamic;
+) ENGINE = InnoDB CHARACTER SET = utf8mb4 COLLATE = utf8mb4_0900_ai_ci ROW_FORMAT = Dynamic;
 
 -- ----------------------------
 -- Records of guest
@@ -185,6 +185,27 @@ INSERT INTO `meal` VALUES (25, 4, 'Gongbao chicken', 7);
 INSERT INTO `meal` VALUES (26, 4, 'Pork Jiaozi', 8);
 INSERT INTO `meal` VALUES (27, 4, 'Soy glazed pork chops', 7);
 INSERT INTO `meal` VALUES (28, 4, 'curry rice', 3);
+
+-- ----------------------------
+-- Table structure for oneweek
+-- ----------------------------
+DROP TABLE IF EXISTS `oneweek`;
+CREATE TABLE `oneweek`  (
+  `day_ID` tinyint(0) UNSIGNED NOT NULL AUTO_INCREMENT,
+  `day_Name` varchar(10) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NOT NULL,
+  PRIMARY KEY (`day_ID`) USING BTREE
+) ENGINE = InnoDB CHARACTER SET = utf8mb4 COLLATE = utf8mb4_0900_ai_ci ROW_FORMAT = Dynamic;
+
+-- ----------------------------
+-- Records of oneweek
+-- ----------------------------
+INSERT INTO `oneweek` VALUES (1, 'Monday');
+INSERT INTO `oneweek` VALUES (2, 'Tuesday');
+INSERT INTO `oneweek` VALUES (3, 'Wednesday');
+INSERT INTO `oneweek` VALUES (4, 'Thursday');
+INSERT INTO `oneweek` VALUES (5, 'Friday');
+INSERT INTO `oneweek` VALUES (6, 'Saturday');
+INSERT INTO `oneweek` VALUES (7, 'Sunday');
 
 -- ----------------------------
 -- Table structure for room
@@ -340,7 +361,7 @@ CREATE TABLE `roomtype`  (
   `roomTypeID` tinyint(0) UNSIGNED NOT NULL AUTO_INCREMENT,
   `roomType` varchar(30) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NOT NULL,
   PRIMARY KEY (`roomTypeID`) USING BTREE
-) ENGINE = InnoDB AUTO_INCREMENT = 5 CHARACTER SET = utf8mb4 COLLATE = utf8mb4_0900_ai_ci ROW_FORMAT = Dynamic;
+) ENGINE = InnoDB AUTO_INCREMENT = 4 CHARACTER SET = utf8mb4 COLLATE = utf8mb4_0900_ai_ci ROW_FORMAT = Dynamic;
 
 -- ----------------------------
 -- Records of roomtype
@@ -356,32 +377,34 @@ INSERT INTO `roomtype` VALUES (4, 'VIP Room');
 DROP TABLE IF EXISTS `schedule`;
 CREATE TABLE `schedule`  (
   `weekday_ID` int(0) UNSIGNED NOT NULL AUTO_INCREMENT,
-  `weekday` varchar(10) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NOT NULL,
   `chefID` tinyint(0) UNSIGNED NOT NULL,
+  `day_ID` tinyint(0) UNSIGNED NOT NULL,
   PRIMARY KEY (`weekday_ID`) USING BTREE,
   INDEX `fk_Schedule_Chef`(`chefID`) USING BTREE,
-  CONSTRAINT `fk_Schedule_Chef` FOREIGN KEY (`chefID`) REFERENCES `chef` (`chefID`) ON DELETE RESTRICT ON UPDATE RESTRICT
+  INDEX `fk_Schedule_OneWeek`(`day_ID`) USING BTREE,
+  CONSTRAINT `fk_Schedule_Chef` FOREIGN KEY (`chefID`) REFERENCES `chef` (`chefID`) ON DELETE RESTRICT ON UPDATE RESTRICT,
+  CONSTRAINT `fk_Schedule_OneWeek` FOREIGN KEY (`day_ID`) REFERENCES `oneweek` (`day_ID`) ON DELETE RESTRICT ON UPDATE RESTRICT
 ) ENGINE = InnoDB CHARACTER SET = utf8mb4 COLLATE = utf8mb4_0900_ai_ci ROW_FORMAT = Dynamic;
 
 -- ----------------------------
 -- Records of schedule
 -- ----------------------------
-INSERT INTO `schedule` VALUES (1, 'Monday', 1);
-INSERT INTO `schedule` VALUES (2, 'Tuesday', 1);
-INSERT INTO `schedule` VALUES (3, 'Wednesday', 1);
-INSERT INTO `schedule` VALUES (4, 'Thursday', 1);
-INSERT INTO `schedule` VALUES (5, 'Friday', 1);
-INSERT INTO `schedule` VALUES (6, 'Wednesday', 2);
-INSERT INTO `schedule` VALUES (7, 'Thursday', 2);
-INSERT INTO `schedule` VALUES (8, 'Friday', 2);
-INSERT INTO `schedule` VALUES (9, 'Saturday', 2);
-INSERT INTO `schedule` VALUES (10, 'Sunday', 2);
-INSERT INTO `schedule` VALUES (11, 'Monday', 3);
-INSERT INTO `schedule` VALUES (12, 'Thursday', 3);
-INSERT INTO `schedule` VALUES (13, 'Saturday', 3);
-INSERT INTO `schedule` VALUES (14, 'Tuesday', 4);
-INSERT INTO `schedule` VALUES (15, 'Saturday', 4);
-INSERT INTO `schedule` VALUES (16, 'Sunday', 4);
+INSERT INTO `schedule` VALUES (1, 1, 1);
+INSERT INTO `schedule` VALUES (2, 1, 2);
+INSERT INTO `schedule` VALUES (3, 1, 3);
+INSERT INTO `schedule` VALUES (4, 1, 4);
+INSERT INTO `schedule` VALUES (5, 1, 5);
+INSERT INTO `schedule` VALUES (6, 2, 3);
+INSERT INTO `schedule` VALUES (7, 2, 4);
+INSERT INTO `schedule` VALUES (8, 2, 5);
+INSERT INTO `schedule` VALUES (9, 2, 6);
+INSERT INTO `schedule` VALUES (10, 2, 7);
+INSERT INTO `schedule` VALUES (11, 3, 1);
+INSERT INTO `schedule` VALUES (12, 3, 4);
+INSERT INTO `schedule` VALUES (13, 3, 6);
+INSERT INTO `schedule` VALUES (14, 4, 2);
+INSERT INTO `schedule` VALUES (15, 4, 6);
+INSERT INTO `schedule` VALUES (16, 4, 7);
 
 -- ----------------------------
 -- Table structure for staff
@@ -394,7 +417,7 @@ CREATE TABLE `staff`  (
   `telephoneNumber` bigint(0) UNSIGNED NOT NULL,
   `operationTime` timestamp(0) NULL DEFAULT NULL ON UPDATE CURRENT_TIMESTAMP(0),
   PRIMARY KEY (`staffID`) USING BTREE
-) ENGINE = InnoDB AUTO_INCREMENT = 4 CHARACTER SET = utf8mb4 COLLATE = utf8mb4_0900_ai_ci ROW_FORMAT = Dynamic;
+) ENGINE = InnoDB AUTO_INCREMENT = 3 CHARACTER SET = utf8mb4 COLLATE = utf8mb4_0900_ai_ci ROW_FORMAT = Dynamic;
 
 -- ----------------------------
 -- Records of staff

@@ -1389,7 +1389,7 @@ public class Booking {
     }
 
     private static void printWeekdayOfChefs() {
-        String sql = "SELECT weekday AS 'Weekday', chefName AS 'Chef Name' FROM `schedule` NATURAL JOIN chef";
+        String sql = "SELECT day_Name AS 'Weekday', chefName AS 'Chef Name' FROM `schedule` NATURAL JOIN chef NATURAL JOIN OneWeek";
         TablePrinter.display(sql, "The weekday of chefs");
         System.out.println();
     }
