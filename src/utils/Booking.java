@@ -1,9 +1,6 @@
 package utils;
 
-import java.sql.Connection;
-import java.sql.Date;
-import java.sql.PreparedStatement;
-import java.sql.ResultSet;
+import java.sql.*;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
@@ -1230,7 +1227,7 @@ public class Booking {
     public static int[] bookMeal(int userID) {
         DB_Utility.printCurrentTime();
         //No matter ordinary customer or guest of hotel can book meal in the hotel, but guest can get 20% discount.
-        //ordinary customer bookedRoom_ID will set to NULL
+        //ordinary customer bookedRoom will set to false(0)
         int[] userInfo = {10, userID};
         System.out.println("Sunny Isles Hotel provides various of meal.");
         System.out.println("You can obtain a 20% discount for the total price of booked meal.");
@@ -1240,41 +1237,50 @@ public class Booking {
         System.out.println("-------------------------------------------");
         System.out.println("If you are consistent with all these condition, congratulations!");
         System.out.println("The chef workday listed in the float window.");
+        //Start: Show Dish, Chef, and Price of meal
         int maxRowOfMeal = printChefAndMeal();
         Scanner scanner = new Scanner(System.in);
         System.out.print("You can type in the corresponding Row Number to select meal of specific chef: ");
         String mealAndChef = scanner.nextLine().trim().toLowerCase();
+        int dishesType_ID;
         Pattern pattern = Pattern.compile("^[0-9]{1,9}$");
         while (true) {
             if (mealAndChef.equals("return")) {
                 return userInfo;
-            }else if (mealAndChef.equals("show")){
+            } else if (mealAndChef.equals("show")) {
                 printChefAndMeal();
                 System.out.print("You can type in the corresponding Row Number to select meal of specific chef: ");
                 mealAndChef = scanner.nextLine().trim().toLowerCase();
             } else if (!pattern.matcher(mealAndChef).matches() || Integer.parseInt(mealAndChef) > maxRowOfMeal) {
-                System.out.println("==================================================================");
+                System.out.println("========================================================================================");
                 System.out.println("(Notice: You cannot click [Enter] to select meal in random.)");
-                System.out.println("If you have closed the window, type in \"Show\" to display it again.");
+                System.out.println("If you have closed the Chef&Meal information window, type in \"Show\" to display it again.");
                 System.out.print("Please type in a valid Row Number: ");
                 mealAndChef = scanner.nextLine().trim().toLowerCase();
             } else {
+                dishesType_ID = Integer.parseInt(mealAndChef);
                 break;
             }
         }
+        //Selection end
+        //Start: Show Weekday of chefs
         System.out.println("----------------------------------------------------");
         System.out.println("The weekday of chefs are listed in the float window.");
         System.out.println("You can reference the table for your meal booking.");
         System.out.println("----------------------------------------------------");
         printWeekdayOfChefs();
+        //End
+        //Start: Specify meal data and time
+        LocalDateTime serveDateTime;
         while (true) {
             System.out.println("(Notice: If you do not set a date, system will set the serve date as today.)");
             System.out.println("(If you set the serve date as today, you cannot get the 20% discount.)");
             System.out.print("Please type in the date of serve date: ");
             String stringServeDateTime = scanner.nextLine().trim();
-            if (stringServeDateTime.equalsIgnoreCase("Return")) return userInfo;//Exit meal booking
             LocalDate serveDate = getValidDate(scanner, stringServeDateTime, true);
-            if (serveDate == null) continue;
+            if (serveDate == null) {
+                return userInfo;//Exit meal booking
+            }
             System.out.println("---------------------------------------------------------------------------------------------------");
             System.out.println("(Notice: The time format is \"Hour:Minute(:Second)\")");
             System.out.println("(\"Second\" is not necessary to fill in.)");
@@ -1283,28 +1289,185 @@ public class Booking {
             System.out.println("(The meal is only available between 7:00 and 22:00, late order will set time to the next date.)");
             System.out.print("Please type in the time that you want to enjoy the meal: ");
             stringServeDateTime = scanner.nextLine().trim();
-            if (stringServeDateTime.equalsIgnoreCase("Return")) return userInfo;//Exit meal booking
+            if (stringServeDateTime.equalsIgnoreCase("Return")) {
+                return userInfo;//Exit meal booking
+            }
             LocalTime serveTime = getValidTime(scanner, stringServeDateTime);
             if (serveTime == null) {
-                continue;
+                return userInfo;//Exit meal booking
             } else if (serveTime == LocalTime.MIDNIGHT) {
                 serveDate = serveDate.plusDays(1);
                 serveTime = LocalTime.of(7, 30, 0);
             }
-            LocalDateTime serveDateTime = LocalDateTime.of(serveDate, serveTime);
+            serveDateTime = LocalDateTime.of(serveDate, serveTime);
             if (serveDateTime.isBefore(LocalDateTime.now())) {
                 System.out.println("========================================");
                 System.out.println("You cannot set the Date&Time before now.");
                 System.out.println("========================================");
                 continue;
             }
-            //how many dishes they want?
-            System.out.println("-------------------");
-            System.out.println("Order succeed");
-            System.out.println("------------------");
+            //Verify whether the chef is working on that day
+            if (!verifyDayOfWeek(dishesType_ID, serveDateTime.toLocalDate())) {
+                System.out.println("=================================================");
+                System.out.println("The chef is not available at this specified time.");
+                System.out.println("=================================================");
+                System.out.println();
+                System.out.println("If you have closed the Chef&WeekDay window, type in \"Show\" to display it again.");
+                System.out.print("Or press [Enter] to continue: ");
+                String buffer = scanner.nextLine().trim().toLowerCase();
+                if (buffer.equals("show")) {
+                    printWeekdayOfChefs();
+                }
+                continue;
+            }
+            System.out.println();
+            System.out.println("-------------------------------------------------------------------------");
+            System.out.println("Order succeed, your serve date time has been recorded " + serveDateTime.format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")));
+            System.out.println("-------------------------------------------------------------------------");
             break;
         }
+        //End
+        //Start: How many dishes to order?
+        System.out.println();
+        //how many dishes they want?
+        System.out.println("------------------------------------------------------");
+        System.out.println("You can click [Enter] to set it as default number \"1\".");
+        System.out.print("How many dishes do you want to order: ");
+        String stringDishes = scanner.nextLine().trim().toLowerCase();
+        int count = 1;
+        while (true) {
+            if (stringDishes.isEmpty()) {
+                break;
+            } else if (stringDishes.equals("return")) {
+                return userInfo;
+            } else if (!pattern.matcher(stringDishes).matches() || Integer.parseInt(stringDishes) == 0) {
+                System.out.println("======================================================");
+                System.out.println("You can click [Enter] to set it as default number \"1\".");
+                System.out.print("Please type in valid dishes number you want to order: ");
+                stringDishes = scanner.nextLine().trim().toLowerCase();
+            } else {
+                count = Integer.parseInt(stringDishes);
+                break;
+            }
+        }
+        //End
+        //Whether the serve date is the day after tomorrow
+        boolean rightDay = !serveDateTime.toLocalDate().isBefore(LocalDate.now().plusDays(2));
+        //Insert data into table
+        insertOrderMealData(userID, dishesType_ID, serveDateTime, count, rightDay);
+        System.out.println("---------------------------------------------------------------");
+        System.out.println("Order succeed, welcome to enjoy the meal at " + serveDateTime.format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")));
+        System.out.println("---------------------------------------------------------------");
         return userInfo;
+    }
+
+    private static boolean verifyDayOfWeek(int dishesType_ID, LocalDate serveDate) {
+        Connection connection = null;
+        Statement statement = null;
+        ResultSet resultSet = null;
+        boolean isWeekDay = false;
+        int chefID = 0;
+        String sql;
+        try {
+            connection = DB_Utility.connect();
+
+            //select chefID from meal&chef table from next weekday verification.
+            statement = connection.createStatement();
+            sql = "SELECT chefID FROM meal WHERE dishesType_ID = " + dishesType_ID;
+            resultSet = statement.executeQuery(sql);
+            if (resultSet.next()) {
+                chefID = resultSet.getInt(1);//chefID
+            }
+
+            //Weekday verification.
+            sql = "SELECT day_ID FROM `schedule` NATURAL JOIN chef NATURAL JOIN OneWeek WHERE chefID = " + chefID;
+            resultSet = statement.executeQuery(sql);
+            while (resultSet.next()) {
+                if (serveDate.getDayOfWeek().getValue() == resultSet.getInt(1)) {
+                    isWeekDay = true;
+                    break;
+                }
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        } finally {
+            DB_Utility.close(connection, statement, resultSet);
+        }
+        return isWeekDay;
+    }
+
+    private static void insertOrderMealData(int userID, int dishesType_ID, LocalDateTime serveDateTime, int count, boolean rightDay) {
+        boolean bookedRoom = checkWhetherHasBookedRoom(userID, serveDateTime.toLocalDate());
+        float eachPrice = getPrice(dishesType_ID);
+        Connection connection = null;
+        PreparedStatement preparedStatement = null;
+        float totalPrice;
+        try {
+            connection = DB_Utility.connect();
+            String sql = "INSERT INTO bookedmeal(userID, bookedRoom, dishesType_ID, orderDate, serveDate, count, totalPrice)" +
+                    " VALUES (?,?,?,NOW(),?,?,?)";
+            preparedStatement = connection.prepareStatement(sql);
+            preparedStatement.setInt(1,userID);
+            preparedStatement.setBoolean(2, bookedRoom);
+            preparedStatement.setInt(3, dishesType_ID);
+            preparedStatement.setTimestamp(4, Timestamp.valueOf(serveDateTime));
+            preparedStatement.setInt(5, count);
+            if (bookedRoom && rightDay) {
+                totalPrice = (float) (0.8 * eachPrice * count);
+            } else {
+                totalPrice = eachPrice * count;
+            }
+            preparedStatement.setFloat(6, totalPrice);
+            preparedStatement.executeUpdate();
+        } catch (Exception e) {
+            e.printStackTrace();
+        } finally {
+            DB_Utility.close(connection, preparedStatement);
+        }
+    }
+
+    private static float getPrice(int dishesType_ID) {
+        Connection connection = null;
+        Statement statement = null;
+        ResultSet resultSet = null;
+        float eachPrice = 0;
+        try {
+            connection = DB_Utility.connect();
+            statement = connection.createStatement();
+            String sql = "SELECT price FROM meal WHERE dishesType_ID = " + dishesType_ID;
+            resultSet = statement.executeQuery(sql);
+            if (resultSet.next()) {
+                eachPrice = resultSet.getFloat(1);//Price of each dish
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        } finally {
+            DB_Utility.close(connection, statement, resultSet);
+        }
+        return eachPrice;
+    }
+
+    private static boolean checkWhetherHasBookedRoom(int userID, LocalDate serveDate) {
+        Connection connection = null;
+        PreparedStatement preparedStatement = null;
+        ResultSet resultSet = null;
+        boolean bookedRoom = false;
+        try {
+            connection = DB_Utility.connect();
+            String sql = "SELECT bookedRoom_ID FROM bookedroom WHERE userID = ? AND ? BETWEEN checkInDate AND checkOutDate";
+            preparedStatement = connection.prepareStatement(sql);
+            preparedStatement.setInt(1, userID);
+            preparedStatement.setDate(2, Date.valueOf(serveDate));
+            resultSet = preparedStatement.executeQuery();
+            if (resultSet.next()) {
+                bookedRoom = true;
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        } finally {
+            DB_Utility.close(connection, preparedStatement, resultSet);
+        }
+        return bookedRoom;
     }
 
     private static LocalTime getValidTime(Scanner scanner, String serveTime) {
@@ -1390,13 +1553,13 @@ public class Booking {
 
     private static void printWeekdayOfChefs() {
         String sql = "SELECT day_Name AS 'Weekday', chefName AS 'Chef Name' FROM `schedule` NATURAL JOIN chef NATURAL JOIN OneWeek";
-        TablePrinter.display(sql, "The weekday of chefs");
+        TablePrinter.display(sql, "The Weekday of Chefs");
         System.out.println();
     }
 
     private static int printChefAndMeal() {
         String sql = "SELECT dishesType_ID AS 'Row Number',chefName AS 'Chef Name', dishes AS 'Dishes', price AS 'Price per Dish' FROM meal NATURAL JOIN chef";
-        int maxRow = TablePrinter.display(sql, "Chefs with corresponding Dishes, and Price of Dishes");
+        int maxRow = TablePrinter.display(sql, "Chefs with Dishes, and Price");
         System.out.println();
         return maxRow;
     }
@@ -1404,7 +1567,17 @@ public class Booking {
     public static int[] cancelMeal(int userID) {
         DB_Utility.printCurrentTime();
         int[] userInfo = {10, userID};
+        System.out.println("---------------------------------------------");
+        System.out.println("Your booked is presented in the float window.");
+        System.out.println("---------------------------------------------");
+        printBookedMeal(userID);
         return userInfo;
+    }
+
+    private static void printBookedMeal(int userID) {
+        String sql = "SELECT bookedMeal_ID AS 'Order Code',chefName AS 'Chef Name',dishes AS 'Dish Name',serveDate AS 'Service Date',count AS 'Total Count',totalPrice AS 'Total Price' FROM BookedMeal NATURAL JOIN meal NATURAL JOIN chef WHERE userID = "+userID;
+        TablePrinter.display(sql, "Your Booked Meal");
+        System.out.println();
     }
 
     public static int[] update(int userID) {
@@ -1436,106 +1609,106 @@ public class Booking {
         return userInfo;
     }
 
-    @Deprecated//It's not necessary anymore,
-    // and future_room_info table and overdue_room_info table will be dropped in future version
-    public static void backupInfo() {
-        Connection connection = null;
-        PreparedStatement preparedStatement = null;
-        ResultSet resultSet = null;
-        String sql;
-        try {
-            connection = DB_Utility.connect();
-
-            //Start: get overdue booked room information
-            sql = "SELECT * FROM BookedRoom WHERE checkOutDate < ?";
-            preparedStatement = connection.prepareStatement(sql, ResultSet.TYPE_SCROLL_INSENSITIVE, ResultSet.CONCUR_UPDATABLE);
-            preparedStatement.setDate(1, Date.valueOf(LocalDate.now()));
-            resultSet = preparedStatement.executeQuery();
-
-            if (resultSet.first()) {
-                resultSet.beforeFirst();
-
-                sql = "INSERT INTO Overdue_Room_Info VALUES (?,?,?,?,?,?)";
-                preparedStatement = connection.prepareStatement(sql, ResultSet.TYPE_SCROLL_INSENSITIVE, ResultSet.CONCUR_UPDATABLE);
-                while (resultSet.next()) {
-                    preparedStatement.setInt(1, resultSet.getInt(1));//"bookedRoom_ID"
-                    preparedStatement.setInt(2, resultSet.getInt(2));//"userID"
-                    preparedStatement.setInt(3, resultSet.getInt(3));//"roomID"
-                    preparedStatement.setDate(4, resultSet.getDate(4));//"checkInDate"
-                    preparedStatement.setDate(5, resultSet.getDate(5));//"checkOutDate"
-                    preparedStatement.setTimestamp(6, resultSet.getTimestamp(6));//"operationTime"
-                    preparedStatement.addBatch();
-                }
-                preparedStatement.executeBatch();
-
-                sql = "DELETE FROM BookedRoom WHERE checkOutDate < ?";
-                preparedStatement = connection.prepareStatement(sql);
-                preparedStatement.setDate(1, Date.valueOf(LocalDate.now()));
-                preparedStatement.executeUpdate();
-            }
-            //End
-
-            //Start: future booked room information backup to the future_room_info table
-            sql = "SELECT * FROM BookedRoom WHERE checkInDate > ?";
-            preparedStatement = connection.prepareStatement(sql, ResultSet.TYPE_SCROLL_INSENSITIVE, ResultSet.CONCUR_UPDATABLE);
-            preparedStatement.setDate(1, Date.valueOf(LocalDate.now()));
-            resultSet = preparedStatement.executeQuery();
-
-            if (resultSet.first()) {
-                resultSet.beforeFirst();
-
-                sql = "INSERT INTO Future_Room_Info VALUES (?,?,?,?,?,?)";
-                preparedStatement = connection.prepareStatement(sql, ResultSet.TYPE_SCROLL_INSENSITIVE, ResultSet.CONCUR_UPDATABLE);
-                while (resultSet.next()) {
-                    preparedStatement.setInt(1, resultSet.getInt(1));//"bookedRoom_ID"
-                    preparedStatement.setInt(2, resultSet.getInt(2));//"userID"
-                    preparedStatement.setInt(3, resultSet.getInt(3));//"roomID"
-                    preparedStatement.setDate(4, resultSet.getDate(4));//"checkInDate"
-                    preparedStatement.setDate(5, resultSet.getDate(5));//"checkOutDate"
-                    preparedStatement.setTimestamp(6, resultSet.getTimestamp(6));//"operationTime"
-                    preparedStatement.addBatch();
-                }
-                preparedStatement.executeBatch();
-
-                sql = "DELETE FROM BookedRoom WHERE checkInDate > ?";
-                preparedStatement = connection.prepareStatement(sql);
-                preparedStatement.setDate(1, Date.valueOf(LocalDate.now()));
-                preparedStatement.executeUpdate();
-            }
-            //End
-
-            //Start: get future booked room information backup to the bookedRoom table
-            sql = "SELECT * FROM Future_Room_Info WHERE checkInDate <= ?";
-            preparedStatement = connection.prepareStatement(sql, ResultSet.TYPE_SCROLL_INSENSITIVE, ResultSet.CONCUR_UPDATABLE);
-            preparedStatement.setDate(1, Date.valueOf(LocalDate.now()));
-            resultSet = preparedStatement.executeQuery();
-
-            if (resultSet.first()) {
-                resultSet.beforeFirst();
-
-                sql = "INSERT INTO BookedRoom VALUES (?,?,?,?,?,?)";
-                preparedStatement = connection.prepareStatement(sql, ResultSet.TYPE_SCROLL_INSENSITIVE, ResultSet.CONCUR_UPDATABLE);
-                while (resultSet.next()) {
-                    preparedStatement.setInt(1, resultSet.getInt(1));//"bookedRoom_ID"
-                    preparedStatement.setInt(2, resultSet.getInt(2));//"userID"
-                    preparedStatement.setInt(3, resultSet.getInt(3));//"roomID"
-                    preparedStatement.setDate(4, resultSet.getDate(4));//"checkInDate"
-                    preparedStatement.setDate(5, resultSet.getDate(5));//"checkOutDate"
-                    preparedStatement.setTimestamp(6, resultSet.getTimestamp(6));//"operationTime"
-                    preparedStatement.addBatch();
-                }
-                preparedStatement.executeBatch();
-
-                sql = "DELETE FROM Future_Room_Info WHERE checkInDate <= ?";
-                preparedStatement = connection.prepareStatement(sql);
-                preparedStatement.setDate(1, Date.valueOf(LocalDate.now()));
-                preparedStatement.executeUpdate();
-            }
-            //End
-        } catch (Exception e) {
-            e.printStackTrace();
-        } finally {
-            DB_Utility.close(connection, preparedStatement, resultSet);
-        }
-    }
+//    @Deprecated//It's not necessary anymore,
+//    // and future_room_info table and overdue_room_info table will be dropped in future version
+//    public static void backupInfo() {
+//        Connection connection = null;
+//        PreparedStatement preparedStatement = null;
+//        ResultSet resultSet = null;
+//        String sql;
+//        try {
+//            connection = DB_Utility.connect();
+//
+//            //Start: get overdue booked room information
+//            sql = "SELECT * FROM BookedRoom WHERE checkOutDate < ?";
+//            preparedStatement = connection.prepareStatement(sql, ResultSet.TYPE_SCROLL_INSENSITIVE, ResultSet.CONCUR_UPDATABLE);
+//            preparedStatement.setDate(1, Date.valueOf(LocalDate.now()));
+//            resultSet = preparedStatement.executeQuery();
+//
+//            if (resultSet.first()) {
+//                resultSet.beforeFirst();
+//
+//                sql = "INSERT INTO Overdue_Room_Info VALUES (?,?,?,?,?,?)";
+//                preparedStatement = connection.prepareStatement(sql, ResultSet.TYPE_SCROLL_INSENSITIVE, ResultSet.CONCUR_UPDATABLE);
+//                while (resultSet.next()) {
+//                    preparedStatement.setInt(1, resultSet.getInt(1));//"bookedRoom_ID"
+//                    preparedStatement.setInt(2, resultSet.getInt(2));//"userID"
+//                    preparedStatement.setInt(3, resultSet.getInt(3));//"roomID"
+//                    preparedStatement.setDate(4, resultSet.getDate(4));//"checkInDate"
+//                    preparedStatement.setDate(5, resultSet.getDate(5));//"checkOutDate"
+//                    preparedStatement.setTimestamp(6, resultSet.getTimestamp(6));//"operationTime"
+//                    preparedStatement.addBatch();
+//                }
+//                preparedStatement.executeBatch();
+//
+//                sql = "DELETE FROM BookedRoom WHERE checkOutDate < ?";
+//                preparedStatement = connection.prepareStatement(sql);
+//                preparedStatement.setDate(1, Date.valueOf(LocalDate.now()));
+//                preparedStatement.executeUpdate();
+//            }
+//            //End
+//
+//            //Start: future booked room information backup to the future_room_info table
+//            sql = "SELECT * FROM BookedRoom WHERE checkInDate > ?";
+//            preparedStatement = connection.prepareStatement(sql, ResultSet.TYPE_SCROLL_INSENSITIVE, ResultSet.CONCUR_UPDATABLE);
+//            preparedStatement.setDate(1, Date.valueOf(LocalDate.now()));
+//            resultSet = preparedStatement.executeQuery();
+//
+//            if (resultSet.first()) {
+//                resultSet.beforeFirst();
+//
+//                sql = "INSERT INTO Future_Room_Info VALUES (?,?,?,?,?,?)";
+//                preparedStatement = connection.prepareStatement(sql, ResultSet.TYPE_SCROLL_INSENSITIVE, ResultSet.CONCUR_UPDATABLE);
+//                while (resultSet.next()) {
+//                    preparedStatement.setInt(1, resultSet.getInt(1));//"bookedRoom_ID"
+//                    preparedStatement.setInt(2, resultSet.getInt(2));//"userID"
+//                    preparedStatement.setInt(3, resultSet.getInt(3));//"roomID"
+//                    preparedStatement.setDate(4, resultSet.getDate(4));//"checkInDate"
+//                    preparedStatement.setDate(5, resultSet.getDate(5));//"checkOutDate"
+//                    preparedStatement.setTimestamp(6, resultSet.getTimestamp(6));//"operationTime"
+//                    preparedStatement.addBatch();
+//                }
+//                preparedStatement.executeBatch();
+//
+//                sql = "DELETE FROM BookedRoom WHERE checkInDate > ?";
+//                preparedStatement = connection.prepareStatement(sql);
+//                preparedStatement.setDate(1, Date.valueOf(LocalDate.now()));
+//                preparedStatement.executeUpdate();
+//            }
+//            //End
+//
+//            //Start: get future booked room information backup to the bookedRoom table
+//            sql = "SELECT * FROM Future_Room_Info WHERE checkInDate <= ?";
+//            preparedStatement = connection.prepareStatement(sql, ResultSet.TYPE_SCROLL_INSENSITIVE, ResultSet.CONCUR_UPDATABLE);
+//            preparedStatement.setDate(1, Date.valueOf(LocalDate.now()));
+//            resultSet = preparedStatement.executeQuery();
+//
+//            if (resultSet.first()) {
+//                resultSet.beforeFirst();
+//
+//                sql = "INSERT INTO BookedRoom VALUES (?,?,?,?,?,?)";
+//                preparedStatement = connection.prepareStatement(sql, ResultSet.TYPE_SCROLL_INSENSITIVE, ResultSet.CONCUR_UPDATABLE);
+//                while (resultSet.next()) {
+//                    preparedStatement.setInt(1, resultSet.getInt(1));//"bookedRoom_ID"
+//                    preparedStatement.setInt(2, resultSet.getInt(2));//"userID"
+//                    preparedStatement.setInt(3, resultSet.getInt(3));//"roomID"
+//                    preparedStatement.setDate(4, resultSet.getDate(4));//"checkInDate"
+//                    preparedStatement.setDate(5, resultSet.getDate(5));//"checkOutDate"
+//                    preparedStatement.setTimestamp(6, resultSet.getTimestamp(6));//"operationTime"
+//                    preparedStatement.addBatch();
+//                }
+//                preparedStatement.executeBatch();
+//
+//                sql = "DELETE FROM Future_Room_Info WHERE checkInDate <= ?";
+//                preparedStatement = connection.prepareStatement(sql);
+//                preparedStatement.setDate(1, Date.valueOf(LocalDate.now()));
+//                preparedStatement.executeUpdate();
+//            }
+//            //End
+//        } catch (Exception e) {
+//            e.printStackTrace();
+//        } finally {
+//            DB_Utility.close(connection, preparedStatement, resultSet);
+//        }
+//    }
 }

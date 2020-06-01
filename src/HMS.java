@@ -23,6 +23,7 @@ public class HMS {
 //            It will also get the current bookedRoom information from future_room_info table,
 //            and put the future booked room information to future_room_info table.
 //            Booking.backupInfo();//It is deprecated after the improvement of SQL.
+
             processing();
 
             System.out.println("Bye");
@@ -149,6 +150,7 @@ public class HMS {
                     step = (byte) userInformation[0];
                     ID = userInformation[1];
                     break;
+                //Dispose the information of the third step from guest
                 case 20:
                     System.out.println();
                     userInformation = Booking.modifyLiveInDate(ID);

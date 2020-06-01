@@ -11,7 +11,7 @@
  Target Server Version : 80020
  File Encoding         : 65001
 
- Date: 01/06/2020 04:42:52
+ Date: 02/06/2020 05:32:00
 */
 
 SET NAMES utf8mb4;
@@ -23,21 +23,19 @@ SET FOREIGN_KEY_CHECKS = 0;
 DROP TABLE IF EXISTS `bookedmeal`;
 CREATE TABLE `bookedmeal`  (
   `bookedMeal_ID` int(0) UNSIGNED NOT NULL AUTO_INCREMENT,
-  `bookedRoom_ID` int(0) UNSIGNED NULL DEFAULT NULL,
-  `dishesType_ID` int(0) UNSIGNED NULL DEFAULT NULL,
-  `weekday_ID` int(0) UNSIGNED NULL DEFAULT NULL,
+  `userID` int(0) UNSIGNED NOT NULL,
+  `bookedRoom` bit(1) NOT NULL,
+  `dishesType_ID` int(0) UNSIGNED NOT NULL,
   `orderDate` datetime(0) NOT NULL,
   `serveDate` datetime(0) NOT NULL,
   `count` int(0) UNSIGNED NOT NULL DEFAULT 1,
   `totalPrice` float UNSIGNED NOT NULL,
   PRIMARY KEY (`bookedMeal_ID`) USING BTREE,
-  INDEX `fk_BookedMeal_BookedRoom`(`bookedRoom_ID`) USING BTREE,
   INDEX `fk_BookedMeal_Meal`(`dishesType_ID`) USING BTREE,
-  INDEX `fk_BookedMeal_Schedule`(`weekday_ID`) USING BTREE,
-  CONSTRAINT `fk_BookedMeal_BookedRoom` FOREIGN KEY (`bookedRoom_ID`) REFERENCES `bookedroom` (`bookedRoom_ID`) ON DELETE RESTRICT ON UPDATE RESTRICT,
+  INDEX `fk_BookedMeal_Guest`(`userID`) USING BTREE,
   CONSTRAINT `fk_BookedMeal_Meal` FOREIGN KEY (`dishesType_ID`) REFERENCES `meal` (`dishesType_ID`) ON DELETE RESTRICT ON UPDATE RESTRICT,
-  CONSTRAINT `fk_BookedMeal_Schedule` FOREIGN KEY (`weekday_ID`) REFERENCES `schedule` (`weekday_ID`) ON DELETE RESTRICT ON UPDATE RESTRICT
-) ENGINE = InnoDB CHARACTER SET = utf8mb4 COLLATE = utf8mb4_0900_ai_ci ROW_FORMAT = Dynamic;
+  CONSTRAINT `fk_BookedMeal_Guest` FOREIGN KEY (`userID`) REFERENCES `guest` (`userID`) ON DELETE RESTRICT ON UPDATE RESTRICT
+) ENGINE = InnoDB AUTO_INCREMENT = 1 CHARACTER SET = utf8mb4 COLLATE = utf8mb4_0900_ai_ci ROW_FORMAT = Dynamic;
 
 -- ----------------------------
 -- Records of bookedmeal
@@ -59,7 +57,7 @@ CREATE TABLE `bookedroom`  (
   INDEX `fk_BookedRoom_Room`(`roomID`) USING BTREE,
   CONSTRAINT `fk_BookedRoom_Guest` FOREIGN KEY (`userID`) REFERENCES `guest` (`userID`) ON DELETE RESTRICT ON UPDATE RESTRICT,
   CONSTRAINT `fk_BookedRoom_Room` FOREIGN KEY (`roomID`) REFERENCES `room` (`roomID`) ON DELETE RESTRICT ON UPDATE RESTRICT
-) ENGINE = InnoDB AUTO_INCREMENT = 28 CHARACTER SET = utf8mb4 COLLATE = utf8mb4_0900_ai_ci ROW_FORMAT = Dynamic;
+) ENGINE = InnoDB AUTO_INCREMENT = 29 CHARACTER SET = utf8mb4 COLLATE = utf8mb4_0900_ai_ci ROW_FORMAT = Dynamic;
 
 -- ----------------------------
 -- Records of bookedroom
@@ -101,7 +99,7 @@ CREATE TABLE `chef`  (
   `chefID` tinyint(0) UNSIGNED NOT NULL AUTO_INCREMENT,
   `chefName` varchar(20) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NOT NULL,
   PRIMARY KEY (`chefID`) USING BTREE
-) ENGINE = InnoDB AUTO_INCREMENT = 4 CHARACTER SET = utf8mb4 COLLATE = utf8mb4_0900_ai_ci ROW_FORMAT = Dynamic;
+) ENGINE = InnoDB AUTO_INCREMENT = 5 CHARACTER SET = utf8mb4 COLLATE = utf8mb4_0900_ai_ci ROW_FORMAT = Dynamic;
 
 -- ----------------------------
 -- Records of chef
@@ -126,7 +124,7 @@ CREATE TABLE `guest`  (
   `operationTime` timestamp(0) NOT NULL ON UPDATE CURRENT_TIMESTAMP(0),
   PRIMARY KEY (`userID`) USING BTREE,
   UNIQUE INDEX `username`(`username`) USING BTREE
-) ENGINE = InnoDB CHARACTER SET = utf8mb4 COLLATE = utf8mb4_0900_ai_ci ROW_FORMAT = Dynamic;
+) ENGINE = InnoDB AUTO_INCREMENT = 10 CHARACTER SET = utf8mb4 COLLATE = utf8mb4_0900_ai_ci ROW_FORMAT = Dynamic;
 
 -- ----------------------------
 -- Records of guest
@@ -152,7 +150,7 @@ CREATE TABLE `meal`  (
   PRIMARY KEY (`dishesType_ID`) USING BTREE,
   INDEX `fk_Meal_Chef`(`chefID`) USING BTREE,
   CONSTRAINT `fk_Meal_Chef` FOREIGN KEY (`chefID`) REFERENCES `chef` (`chefID`) ON DELETE RESTRICT ON UPDATE RESTRICT
-) ENGINE = InnoDB CHARACTER SET = utf8mb4 COLLATE = utf8mb4_0900_ai_ci ROW_FORMAT = Dynamic;
+) ENGINE = InnoDB AUTO_INCREMENT = 29 CHARACTER SET = utf8mb4 COLLATE = utf8mb4_0900_ai_ci ROW_FORMAT = Dynamic;
 
 -- ----------------------------
 -- Records of meal
@@ -194,7 +192,7 @@ CREATE TABLE `oneweek`  (
   `day_ID` tinyint(0) UNSIGNED NOT NULL AUTO_INCREMENT,
   `day_Name` varchar(10) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NOT NULL,
   PRIMARY KEY (`day_ID`) USING BTREE
-) ENGINE = InnoDB CHARACTER SET = utf8mb4 COLLATE = utf8mb4_0900_ai_ci ROW_FORMAT = Dynamic;
+) ENGINE = InnoDB AUTO_INCREMENT = 8 CHARACTER SET = utf8mb4 COLLATE = utf8mb4_0900_ai_ci ROW_FORMAT = Dynamic;
 
 -- ----------------------------
 -- Records of oneweek
@@ -361,7 +359,7 @@ CREATE TABLE `roomtype`  (
   `roomTypeID` tinyint(0) UNSIGNED NOT NULL AUTO_INCREMENT,
   `roomType` varchar(30) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NOT NULL,
   PRIMARY KEY (`roomTypeID`) USING BTREE
-) ENGINE = InnoDB AUTO_INCREMENT = 4 CHARACTER SET = utf8mb4 COLLATE = utf8mb4_0900_ai_ci ROW_FORMAT = Dynamic;
+) ENGINE = InnoDB AUTO_INCREMENT = 5 CHARACTER SET = utf8mb4 COLLATE = utf8mb4_0900_ai_ci ROW_FORMAT = Dynamic;
 
 -- ----------------------------
 -- Records of roomtype
@@ -384,7 +382,7 @@ CREATE TABLE `schedule`  (
   INDEX `fk_Schedule_OneWeek`(`day_ID`) USING BTREE,
   CONSTRAINT `fk_Schedule_Chef` FOREIGN KEY (`chefID`) REFERENCES `chef` (`chefID`) ON DELETE RESTRICT ON UPDATE RESTRICT,
   CONSTRAINT `fk_Schedule_OneWeek` FOREIGN KEY (`day_ID`) REFERENCES `oneweek` (`day_ID`) ON DELETE RESTRICT ON UPDATE RESTRICT
-) ENGINE = InnoDB CHARACTER SET = utf8mb4 COLLATE = utf8mb4_0900_ai_ci ROW_FORMAT = Dynamic;
+) ENGINE = InnoDB AUTO_INCREMENT = 17 CHARACTER SET = utf8mb4 COLLATE = utf8mb4_0900_ai_ci ROW_FORMAT = Dynamic;
 
 -- ----------------------------
 -- Records of schedule
@@ -417,7 +415,7 @@ CREATE TABLE `staff`  (
   `telephoneNumber` bigint(0) UNSIGNED NOT NULL,
   `operationTime` timestamp(0) NULL DEFAULT NULL ON UPDATE CURRENT_TIMESTAMP(0),
   PRIMARY KEY (`staffID`) USING BTREE
-) ENGINE = InnoDB AUTO_INCREMENT = 3 CHARACTER SET = utf8mb4 COLLATE = utf8mb4_0900_ai_ci ROW_FORMAT = Dynamic;
+) ENGINE = InnoDB AUTO_INCREMENT = 4 CHARACTER SET = utf8mb4 COLLATE = utf8mb4_0900_ai_ci ROW_FORMAT = Dynamic;
 
 -- ----------------------------
 -- Records of staff
