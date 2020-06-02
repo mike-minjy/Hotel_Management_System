@@ -40,7 +40,7 @@ public class StaffOperation {
         int[] staffInfo = {2, staffID};
         Scanner scanner = new Scanner(System.in);
         System.out.println("1. Check Rooms");
-        System.out.println("2. Check Meals");//(Might be developed later)
+        System.out.println("2. Check Meals");
         System.out.println("3. Change Password");
         System.out.println("4. Log out");
         System.out.println("5. quit the system");
@@ -149,7 +149,7 @@ public class StaffOperation {
         String sql;
         try {
             connection = DB_Utility.connect();
-            statement = connection.createStatement(ResultSet.TYPE_SCROLL_INSENSITIVE,ResultSet.CONCUR_UPDATABLE);
+            statement = connection.createStatement(ResultSet.TYPE_SCROLL_INSENSITIVE, ResultSet.CONCUR_UPDATABLE);
             switch (roomID) {
                 case "0":
                     sql = "SELECT realName,roomID,roomType,checkInDate,checkOutDate FROM BookedRoom NATURAL JOIN room NATURAL JOIN RoomType LEFT OUTER JOIN Guest USING (userID)";
@@ -181,11 +181,11 @@ public class StaffOperation {
             }
 
             resultSet.beforeFirst();
-            if (!resultSet.next()){
+            if (!resultSet.next()) {
                 System.out.println("*********");
                 System.out.println("Empty Set");
                 System.out.println("*********");
-            }else {
+            } else {
                 System.out.println("*************************** end row ***************************");
             }
 
@@ -199,7 +199,45 @@ public class StaffOperation {
     public static int[] mealManagement(int staffID) {
         DB_Utility.printCurrentTime();
         int[] staffInfo = {16, staffID};
+        Scanner scanner = new Scanner(System.in);
+        System.out.println("-------------------------------------------------------------");
+        System.out.println("You can search the Meal Order with Guest's Real Name.");
+        System.out.println("Or you can click [Enter] to display all booked meal of guest.");
+        System.out.println("-------------------------------------------------------------");
+        System.out.println("Type in \"Return\" back to previous page.");
+        System.out.print("You can type in the content here: ");
+        String input = scanner.nextLine().trim().toLowerCase();
+        Pattern pattern = Pattern.compile("^[[A-Za-z]|\\s]+$");//Real Name format
+        while (true) {
+            if (input.isEmpty()) {
+                displayAllMealOrder();
+                System.out.print("You can type in the search contents here: ");
+                input = scanner.nextLine().trim().toLowerCase();
+            } else if (input.equals("return")) {
+                break;
+            } else if (!pattern.matcher(input).matches()) {
+                System.out.println("===================================");
+                System.out.print("Please type in a valid information: ");
+                input = scanner.nextLine().trim().toLowerCase();
+            } else {
+                displayAnOrder(input);
+                System.out.print("You can type in the search contents here: ");
+                input = scanner.nextLine().trim().toLowerCase();
+            }
+        }
         return staffInfo;
+    }
+
+    private static void displayAnOrder(String guestRealName) {
+        String sql = "SELECT bookedMeal_ID AS 'Order Code',chefName AS 'Chef Name',dishes AS 'Dish Name',serveDate AS 'Service Date',count AS 'Total Count',totalPrice AS 'Total Price' FROM BookedMeal NATURAL JOIN meal NATURAL JOIN chef NATURAL JOIN guest WHERE realName = '"+guestRealName+"'";
+        TablePrinter.display(sql, "The Meal Orders of Guest: "+guestRealName);
+        System.out.println();
+    }
+
+    private static void displayAllMealOrder() {
+        String sql = "SELECT realName AS 'Real Name of Guest', bookedMeal_ID AS 'Order Code',chefName AS 'Chef Name',dishes AS 'Dish Name',serveDate AS 'Service Date',count AS 'Total Count',totalPrice AS 'Total Price' FROM BookedMeal NATURAL JOIN meal NATURAL JOIN chef NATURAL JOIN guest";
+        TablePrinter.display(sql, "The Meal Orders of Guests");
+        System.out.println();
     }
 
     public static int[] changePassword(int staffID) {

@@ -3,8 +3,6 @@ import utils.*;
 import java.util.Scanner;
 
 public class HMS {
-//    private HMS() {
-//    }
 
     public static void main(String[] args) {
 
@@ -13,16 +11,6 @@ public class HMS {
             System.out.println("                                 *-------------------------------------*");
             System.out.println("                                 *     Welcome to use this system!     *");
             System.out.println("                                 *-------------------------------------*");
-
-//            System.out.println("-----------------------------------------");
-//            System.out.println("System needs a few seconds to initialise.");
-//            System.out.println("-----------------------------------------");
-//            System.out.println();
-//
-//            This method will backup the overdue booked room information to another table.
-//            It will also get the current bookedRoom information from future_room_info table,
-//            and put the future booked room information to future_room_info table.
-//            Booking.backupInfo();//It is deprecated after the improvement of SQL.
 
             processing();
 
@@ -178,7 +166,7 @@ public class HMS {
         Scanner scanner = new Scanner(System.in);
         System.out.println("1. Guest Mode   (Type in \"1\" or full name of mode to select this mode)");
         System.out.println("2. Staff Mode   (Type in \"2\" or full name of mode to select this mode)");
-        System.out.println("3. quit the system");
+        System.out.println("3. quit the system (Exit)");
         System.out.print("Please type in the corresponding number of different modes to select your identity: ");
         String input = scanner.nextLine().trim().toLowerCase();
         while (true) {
@@ -191,6 +179,7 @@ public class HMS {
                     return 2;                   //Selected Staff Mode, return 2.
                 case "3":
                 case "quit the system":
+                case "exit":
                     return -1;
                 default:
                     System.out.println();
@@ -201,14 +190,4 @@ public class HMS {
             }
         }
     }
-
-//    private static void quit() {
-//        Scanner scanner = new Scanner(System.in);
-//        System.out.println("Type in \"quit\" or \"exit\" to leave the system.");
-//        String input = scanner.nextLine().trim().toLowerCase();
-//        if (input.equals("quit") || input.equals("exit") || input.equals("leave")) {
-//            System.out.println("Bye");
-//            System.exit(0);
-//        }
-//    }
 }

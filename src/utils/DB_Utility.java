@@ -58,7 +58,7 @@ public class DB_Utility {
     }
 
     /**
-     * Overload the close(Connection,Statement,ResultSet) method which did not have created a ResultSet instance.
+     * Overload the close(Connection,Statement,ResultSet) method which did not have created an ResultSet instance.
      *
      * @param connection
      * @param statement

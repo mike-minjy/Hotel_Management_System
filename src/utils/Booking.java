@@ -1340,7 +1340,7 @@ public class Booking {
                 break;
             } else if (stringDishes.equals("return")) {
                 return userInfo;
-            } else if (!pattern.matcher(stringDishes).matches() || Integer.parseInt(stringDishes) == 0) {
+            } else if (!pattern.matcher(stringDishes).matches() || stringDishes.equals("0")) {
                 System.out.println("======================================================");
                 System.out.println("You can click [Enter] to set it as default number \"1\".");
                 System.out.print("Please type in valid dishes number you want to order: ");
@@ -1407,7 +1407,7 @@ public class Booking {
             String sql = "INSERT INTO bookedmeal(userID, bookedRoom, dishesType_ID, orderDate, serveDate, count, totalPrice)" +
                     " VALUES (?,?,?,NOW(),?,?,?)";
             preparedStatement = connection.prepareStatement(sql);
-            preparedStatement.setInt(1,userID);
+            preparedStatement.setInt(1, userID);
             preparedStatement.setBoolean(2, bookedRoom);
             preparedStatement.setInt(3, dishesType_ID);
             preparedStatement.setTimestamp(4, Timestamp.valueOf(serveDateTime));
@@ -1567,17 +1567,168 @@ public class Booking {
     public static int[] cancelMeal(int userID) {
         DB_Utility.printCurrentTime();
         int[] userInfo = {10, userID};
-        System.out.println("---------------------------------------------");
-        System.out.println("Your booked is presented in the float window.");
-        System.out.println("---------------------------------------------");
-        printBookedMeal(userID);
+        boolean isEmpty = getOrderCodes(userID).length == 0;
+        if (isEmpty) {
+            System.out.println("==================================================================");
+            System.out.println("You should book a meal at first.");
+            System.out.println("Notice: You cannot cancel the meal order with serve date at today.");
+            System.out.println("==================================================================");
+        } else {
+            cancelMealOrder(userID);
+        }
         return userInfo;
     }
 
-    private static void printBookedMeal(int userID) {
-        String sql = "SELECT bookedMeal_ID AS 'Order Code',chefName AS 'Chef Name',dishes AS 'Dish Name',serveDate AS 'Service Date',count AS 'Total Count',totalPrice AS 'Total Price' FROM BookedMeal NATURAL JOIN meal NATURAL JOIN chef WHERE userID = "+userID;
-        TablePrinter.display(sql, "Your Booked Meal");
+    private static void cancelMealOrder(int userID) {
+        System.out.println("---------------------------------------------------");
+        System.out.println("Your booked would be presented in the float window.");
+        System.out.println("---------------------------------------------------");
         System.out.println();
+        int[] orderCodes = printBookedMeal(userID);
+
+        Connection connection = null;
+        PreparedStatement preparedStatement = null;
+        try {
+            connection = DB_Utility.connect();
+            connection.setAutoCommit(false);
+
+            Scanner scanner = new Scanner(System.in);
+            System.out.println("Type in \"Return\" back to previous page.");
+            System.out.print("You can type in the \"Order Code\" to cancel that order of meal: ");
+            String input = scanner.nextLine().trim().toLowerCase();
+            Pattern pattern = Pattern.compile("^[0-9]{1,9}$");
+            whileLoop:
+            while (true) {
+                if (input.equals("return")) {
+                    System.out.println("-----------------------");
+                    System.out.println("1. Save changes");
+                    System.out.println("2. Cancel changes");
+                    System.out.println("3. Continue cancel meal");
+                    System.out.println("-----------------------");
+                    System.out.print("What you want to do next: ");
+                    input = scanner.nextLine().trim().toLowerCase();
+                    switch (input) {
+                        case "1":
+                        case "save changes":
+                            connection.commit();
+                            System.out.println("--------------");
+                            System.out.println("Changes saved.");
+                            System.out.println("--------------");
+                            break whileLoop;
+                        case "2":
+                        case "cancel changes":
+                            connection.rollback();
+                            System.out.println("------------------");
+                            System.out.println("Changes cancelled.");
+                            System.out.println("------------------");
+                            break whileLoop;
+                        case "3":
+                        case "continue cancel meal":
+                            break;
+                        default:
+                            System.out.println("=============================");
+                            System.out.print("Please choose a valid option: ");
+                            input = scanner.nextLine().trim().toLowerCase();
+                            break;
+                    }
+                } else if (input.equals("show")) {
+                    orderCodes = printBookedMeal(userID);
+                } else if (!pattern.matcher(input).matches()) {
+                    System.out.println("==============================");
+                    System.out.print("Please type in a valid number:");
+                    input = scanner.nextLine().trim().toLowerCase();
+                } else if (!codesContains(orderCodes, Integer.parseInt(input))) {
+                    System.out.println("===================================");
+                    System.out.print("Please type in an exist Order Code: ");
+                    input = scanner.nextLine().trim().toLowerCase();
+                } else {
+                    String sql = "DELETE FROM bookedmeal WHERE bookedMeal_ID = ?";
+                    preparedStatement = connection.prepareStatement(sql);
+                    preparedStatement.setInt(1, Integer.parseInt(input));
+                    preparedStatement.executeUpdate();
+                    System.out.println("--------------------------");
+                    System.out.println("Cancel Meal Order succeed.");
+                    System.out.println("--------------------------");
+                    //Delete order data from orderCodes array.
+                    for (int i = 0; i < orderCodes.length; i++) {
+                        if (orderCodes[i] == Integer.parseInt(input)) {
+                            orderCodes[i] = -1;//Reset data (stands for remove it)
+                            break;
+                        }
+                    }
+                    System.out.println("You can type in \"Return\" back to previous page.");
+                    System.out.println("You can type in \"Show\" to display the Meal Order again.");
+                    System.out.print("You could also type in other Order Code to continue cancel: ");
+                    input = scanner.nextLine().trim().toLowerCase();
+                }
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+            if (connection != null) {
+                try {
+                    connection.rollback();
+                } catch (Exception throwable) {
+                    throwable.printStackTrace();
+                }
+            }
+        } finally {
+            DB_Utility.close(connection, preparedStatement);
+        }
+    }
+
+    @Deprecated//It's function is a subset of getOrderCodes(int) method.
+    private static boolean verifyEmpty(int userID) {
+        Connection connection = null;
+        Statement statement = null;
+        ResultSet resultSet = null;
+        boolean isEmpty = true;
+        try {
+            connection = DB_Utility.connect();
+            statement = connection.createStatement();
+            String sql = "SELECT bookedMeal_ID FROM bookedmeal WHERE userID = " + userID + " AND serveDate > '" + LocalDate.now().toString() + "'";
+            resultSet = statement.executeQuery(sql);
+            if (resultSet.next()) {
+                isEmpty = false;
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        } finally {
+            DB_Utility.close(connection, statement, resultSet);
+        }
+        return isEmpty;
+    }
+
+    private static int[] printBookedMeal(int userID) {
+        String sql = "SELECT bookedMeal_ID AS 'Order Code',chefName AS 'Chef Name',dishes AS 'Dish Name',serveDate AS 'Service Date',count AS 'Total Count',totalPrice AS 'Total Price' FROM BookedMeal NATURAL JOIN meal NATURAL JOIN chef WHERE userID = " + userID + " AND serveDate > '" + LocalDate.now().toString() + "'";
+        TablePrinter.display(sql, "Your Booked Meal");
+        int[] orderCodes = getOrderCodes(userID);
+        System.out.println();
+        return orderCodes;
+    }
+
+    private static int[] getOrderCodes(int userID) {
+        Connection connection = null;
+        Statement statement = null;
+        ResultSet resultSet = null;
+        int[] orderCodes = null;
+        try {
+            connection = DB_Utility.connect();
+            statement = connection.createStatement(ResultSet.TYPE_SCROLL_INSENSITIVE, ResultSet.CONCUR_READ_ONLY);
+            String sql = "SELECT bookedMeal_ID FROM bookedmeal WHERE userID = " + userID + " AND serveDate > '" + LocalDate.now().toString() + "'";
+            resultSet = statement.executeQuery(sql);
+            resultSet.last();
+            orderCodes = new int[resultSet.getRow()];
+            resultSet.beforeFirst();
+            while (resultSet.next()) {
+                int index = resultSet.getRow() - 1;
+                orderCodes[index] = resultSet.getInt(1);//The order code
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        } finally {
+            DB_Utility.close(connection, statement, resultSet);
+        }
+        return orderCodes;
     }
 
     public static int[] update(int userID) {
@@ -1608,107 +1759,4 @@ public class Booking {
         }
         return userInfo;
     }
-
-//    @Deprecated//It's not necessary anymore,
-//    // and future_room_info table and overdue_room_info table will be dropped in future version
-//    public static void backupInfo() {
-//        Connection connection = null;
-//        PreparedStatement preparedStatement = null;
-//        ResultSet resultSet = null;
-//        String sql;
-//        try {
-//            connection = DB_Utility.connect();
-//
-//            //Start: get overdue booked room information
-//            sql = "SELECT * FROM BookedRoom WHERE checkOutDate < ?";
-//            preparedStatement = connection.prepareStatement(sql, ResultSet.TYPE_SCROLL_INSENSITIVE, ResultSet.CONCUR_UPDATABLE);
-//            preparedStatement.setDate(1, Date.valueOf(LocalDate.now()));
-//            resultSet = preparedStatement.executeQuery();
-//
-//            if (resultSet.first()) {
-//                resultSet.beforeFirst();
-//
-//                sql = "INSERT INTO Overdue_Room_Info VALUES (?,?,?,?,?,?)";
-//                preparedStatement = connection.prepareStatement(sql, ResultSet.TYPE_SCROLL_INSENSITIVE, ResultSet.CONCUR_UPDATABLE);
-//                while (resultSet.next()) {
-//                    preparedStatement.setInt(1, resultSet.getInt(1));//"bookedRoom_ID"
-//                    preparedStatement.setInt(2, resultSet.getInt(2));//"userID"
-//                    preparedStatement.setInt(3, resultSet.getInt(3));//"roomID"
-//                    preparedStatement.setDate(4, resultSet.getDate(4));//"checkInDate"
-//                    preparedStatement.setDate(5, resultSet.getDate(5));//"checkOutDate"
-//                    preparedStatement.setTimestamp(6, resultSet.getTimestamp(6));//"operationTime"
-//                    preparedStatement.addBatch();
-//                }
-//                preparedStatement.executeBatch();
-//
-//                sql = "DELETE FROM BookedRoom WHERE checkOutDate < ?";
-//                preparedStatement = connection.prepareStatement(sql);
-//                preparedStatement.setDate(1, Date.valueOf(LocalDate.now()));
-//                preparedStatement.executeUpdate();
-//            }
-//            //End
-//
-//            //Start: future booked room information backup to the future_room_info table
-//            sql = "SELECT * FROM BookedRoom WHERE checkInDate > ?";
-//            preparedStatement = connection.prepareStatement(sql, ResultSet.TYPE_SCROLL_INSENSITIVE, ResultSet.CONCUR_UPDATABLE);
-//            preparedStatement.setDate(1, Date.valueOf(LocalDate.now()));
-//            resultSet = preparedStatement.executeQuery();
-//
-//            if (resultSet.first()) {
-//                resultSet.beforeFirst();
-//
-//                sql = "INSERT INTO Future_Room_Info VALUES (?,?,?,?,?,?)";
-//                preparedStatement = connection.prepareStatement(sql, ResultSet.TYPE_SCROLL_INSENSITIVE, ResultSet.CONCUR_UPDATABLE);
-//                while (resultSet.next()) {
-//                    preparedStatement.setInt(1, resultSet.getInt(1));//"bookedRoom_ID"
-//                    preparedStatement.setInt(2, resultSet.getInt(2));//"userID"
-//                    preparedStatement.setInt(3, resultSet.getInt(3));//"roomID"
-//                    preparedStatement.setDate(4, resultSet.getDate(4));//"checkInDate"
-//                    preparedStatement.setDate(5, resultSet.getDate(5));//"checkOutDate"
-//                    preparedStatement.setTimestamp(6, resultSet.getTimestamp(6));//"operationTime"
-//                    preparedStatement.addBatch();
-//                }
-//                preparedStatement.executeBatch();
-//
-//                sql = "DELETE FROM BookedRoom WHERE checkInDate > ?";
-//                preparedStatement = connection.prepareStatement(sql);
-//                preparedStatement.setDate(1, Date.valueOf(LocalDate.now()));
-//                preparedStatement.executeUpdate();
-//            }
-//            //End
-//
-//            //Start: get future booked room information backup to the bookedRoom table
-//            sql = "SELECT * FROM Future_Room_Info WHERE checkInDate <= ?";
-//            preparedStatement = connection.prepareStatement(sql, ResultSet.TYPE_SCROLL_INSENSITIVE, ResultSet.CONCUR_UPDATABLE);
-//            preparedStatement.setDate(1, Date.valueOf(LocalDate.now()));
-//            resultSet = preparedStatement.executeQuery();
-//
-//            if (resultSet.first()) {
-//                resultSet.beforeFirst();
-//
-//                sql = "INSERT INTO BookedRoom VALUES (?,?,?,?,?,?)";
-//                preparedStatement = connection.prepareStatement(sql, ResultSet.TYPE_SCROLL_INSENSITIVE, ResultSet.CONCUR_UPDATABLE);
-//                while (resultSet.next()) {
-//                    preparedStatement.setInt(1, resultSet.getInt(1));//"bookedRoom_ID"
-//                    preparedStatement.setInt(2, resultSet.getInt(2));//"userID"
-//                    preparedStatement.setInt(3, resultSet.getInt(3));//"roomID"
-//                    preparedStatement.setDate(4, resultSet.getDate(4));//"checkInDate"
-//                    preparedStatement.setDate(5, resultSet.getDate(5));//"checkOutDate"
-//                    preparedStatement.setTimestamp(6, resultSet.getTimestamp(6));//"operationTime"
-//                    preparedStatement.addBatch();
-//                }
-//                preparedStatement.executeBatch();
-//
-//                sql = "DELETE FROM Future_Room_Info WHERE checkInDate <= ?";
-//                preparedStatement = connection.prepareStatement(sql);
-//                preparedStatement.setDate(1, Date.valueOf(LocalDate.now()));
-//                preparedStatement.executeUpdate();
-//            }
-//            //End
-//        } catch (Exception e) {
-//            e.printStackTrace();
-//        } finally {
-//            DB_Utility.close(connection, preparedStatement, resultSet);
-//        }
-//    }
 }
