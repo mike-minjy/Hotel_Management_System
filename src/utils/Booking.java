@@ -12,6 +12,9 @@ import java.util.regex.Pattern;
 
 public class Booking {
 
+    /**
+     * Prevent create an object of this class.
+     */
     private Booking() {
     }
 
@@ -1251,7 +1254,7 @@ public class Booking {
                 printChefAndMeal();
                 System.out.print("You can type in the corresponding Row Number to select meal of specific chef: ");
                 mealAndChef = scanner.nextLine().trim().toLowerCase();
-            } else if (!pattern.matcher(mealAndChef).matches() || Integer.parseInt(mealAndChef) > maxRowOfMeal) {
+            } else if (!pattern.matcher(mealAndChef).matches() || Integer.parseInt(mealAndChef) > maxRowOfMeal || mealAndChef.equals("0")) {
                 System.out.println("========================================================================================");
                 System.out.println("(Notice: You cannot click [Enter] to select meal in random.)");
                 System.out.println("If you have closed the Chef&Meal information window, type in \"Show\" to display it again.");
@@ -1284,8 +1287,8 @@ public class Booking {
             System.out.println("---------------------------------------------------------------------------------------------------");
             System.out.println("(Notice: The time format is \"Hour:Minute(:Second)\")");
             System.out.println("(\"Second\" is not necessary to fill in.)");
-            System.out.println("(If you click [Enter] to skip it, the time will be set to 17:30 if your current time is afternoon.)");
-            System.out.println("(Similarly: morning --> 7:30, forenoon --> 12:30, night snack --> 21:00)");
+            System.out.println("(If you click [Enter] to skip it, the time will be set to 17:30 if your current time before 17:30.)");
+            System.out.println("(Similarly: morning --> 7:30, forenoon --> 12:30, night snack --> 21:00, then next day morning)");
             System.out.println("(The meal is only available between 7:00 and 22:00, late order will set time to the next date.)");
             System.out.print("Please type in the time that you want to enjoy the meal: ");
             stringServeDateTime = scanner.nextLine().trim();
@@ -1321,9 +1324,9 @@ public class Booking {
                 continue;
             }
             System.out.println();
-            System.out.println("-------------------------------------------------------------------------");
-            System.out.println("Order succeed, your serve date time has been recorded " + serveDateTime.format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")));
-            System.out.println("-------------------------------------------------------------------------");
+            System.out.println("-----------------------------------------------------------------------------");
+            System.out.println("Order succeed, your serve date time has been recorded --> " + serveDateTime.format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")));
+            System.out.println("-----------------------------------------------------------------------------");
             break;
         }
         //End
@@ -1583,8 +1586,6 @@ public class Booking {
         System.out.println("---------------------------------------------------");
         System.out.println("Your booked would be presented in the float window.");
         System.out.println("---------------------------------------------------");
-        System.out.println();
-        int[] orderCodes = printBookedMeal(userID);
 
         Connection connection = null;
         PreparedStatement preparedStatement = null;
@@ -1592,6 +1593,7 @@ public class Booking {
             connection = DB_Utility.connect();
             connection.setAutoCommit(false);
 
+            int[] orderCodes = printBookedMeal(userID);
             Scanner scanner = new Scanner(System.in);
             System.out.println("Type in \"Return\" back to previous page.");
             System.out.print("You can type in the \"Order Code\" to cancel that order of meal: ");
@@ -1624,6 +1626,10 @@ public class Booking {
                             break whileLoop;
                         case "3":
                         case "continue cancel meal":
+                            System.out.println("You can type in \"Return\" back to previous page.");
+                            System.out.println("You can type in \"Show\" to display the Meal Order again.");
+                            System.out.print("You could also type in other Order Code to continue cancel: ");
+                            input = scanner.nextLine().trim().toLowerCase();
                             break;
                         default:
                             System.out.println("=============================");
@@ -1633,6 +1639,10 @@ public class Booking {
                     }
                 } else if (input.equals("show")) {
                     orderCodes = printBookedMeal(userID);
+                    System.out.println("You can type in \"Return\" back to previous page.");
+                    System.out.println("You can type in \"Show\" to display the Meal Order again.");
+                    System.out.print("You could also type in other Order Code to continue cancel: ");
+                    input = scanner.nextLine().trim().toLowerCase();
                 } else if (!pattern.matcher(input).matches()) {
                     System.out.println("==============================");
                     System.out.print("Please type in a valid number:");
@@ -1699,7 +1709,9 @@ public class Booking {
     }
 
     private static int[] printBookedMeal(int userID) {
-        String sql = "SELECT bookedMeal_ID AS 'Order Code',chefName AS 'Chef Name',dishes AS 'Dish Name',serveDate AS 'Service Date',count AS 'Total Count',totalPrice AS 'Total Price' FROM BookedMeal NATURAL JOIN meal NATURAL JOIN chef WHERE userID = " + userID + " AND serveDate > '" + LocalDate.now().toString() + "'";
+        String sql = "SELECT bookedMeal_ID AS 'Order Code',chefName AS 'Chef Name',dishes AS 'Dish Name',serveDate AS 'Service Date',count AS 'Total Count',totalPrice AS 'Total Price'" +
+                " FROM BookedMeal NATURAL JOIN meal NATURAL JOIN chef" +
+                " WHERE userID = " + userID + " AND serveDate > '" + LocalDateTime.of(LocalDate.now(), LocalTime.MAX).format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")) + "'";
         TablePrinter.display(sql, "Your Booked Meal");
         int[] orderCodes = getOrderCodes(userID);
         System.out.println();
@@ -1707,15 +1719,18 @@ public class Booking {
     }
 
     private static int[] getOrderCodes(int userID) {
-        Connection connection = null;
-        Statement statement = null;
+        Connection connection=null;
+        PreparedStatement preparedStatement = null;
         ResultSet resultSet = null;
         int[] orderCodes = null;
         try {
-            connection = DB_Utility.connect();
-            statement = connection.createStatement(ResultSet.TYPE_SCROLL_INSENSITIVE, ResultSet.CONCUR_READ_ONLY);
-            String sql = "SELECT bookedMeal_ID FROM bookedmeal WHERE userID = " + userID + " AND serveDate > '" + LocalDate.now().toString() + "'";
-            resultSet = statement.executeQuery(sql);
+            connection=DB_Utility.connect();
+            String sql = "SELECT bookedMeal_ID FROM BookedMeal WHERE userID = ? AND serveDate > ?";
+            preparedStatement = connection.prepareStatement(sql, ResultSet.TYPE_SCROLL_INSENSITIVE, ResultSet.CONCUR_READ_ONLY);
+            preparedStatement.setInt(1,userID);
+            preparedStatement.setTimestamp(2, Timestamp.valueOf(LocalDateTime.of(LocalDate.now(), LocalTime.MAX)));
+            connection.setTransactionIsolation(Connection.TRANSACTION_READ_UNCOMMITTED);
+            resultSet = preparedStatement.executeQuery();
             resultSet.last();
             orderCodes = new int[resultSet.getRow()];
             resultSet.beforeFirst();
@@ -1723,10 +1738,18 @@ public class Booking {
                 int index = resultSet.getRow() - 1;
                 orderCodes[index] = resultSet.getInt(1);//The order code
             }
+            connection.setTransactionIsolation(Connection.TRANSACTION_REPEATABLE_READ);
         } catch (Exception e) {
+            if (connection!=null){
+                try {
+                    connection.setTransactionIsolation(Connection.TRANSACTION_REPEATABLE_READ);
+                } catch (Exception throwable) {
+                    throwable.printStackTrace();
+                }
+            }
             e.printStackTrace();
         } finally {
-            DB_Utility.close(connection, statement, resultSet);
+            DB_Utility.close(connection, preparedStatement, resultSet);
         }
         return orderCodes;
     }

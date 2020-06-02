@@ -1,11 +1,9 @@
-/*START FILE*/
-
 -- phpMyAdmin SQL Dump
 -- version 5.0.1
 -- https://www.phpmyadmin.net/
 --
 -- Host: 127.0.0.1
--- Generation Time: May 20, 2020 at 08:08 PM
+-- Generation Time: Jun 02, 2020 at 08:52 PM
 -- Server version: 10.4.11-MariaDB
 -- PHP Version: 7.3.14
 
@@ -32,14 +30,22 @@ SET time_zone = "+00:00";
 
 CREATE TABLE `bookedmeal` (
   `bookedMeal_ID` int(10) UNSIGNED NOT NULL,
-  `bookedRoom_ID` int(10) UNSIGNED DEFAULT NULL,
-  `chefID` tinyint(3) UNSIGNED NOT NULL,
-  `dishes` varchar(60) NOT NULL,
+  `userID` int(10) UNSIGNED NOT NULL,
+  `bookedRoom` bit(1) NOT NULL,
+  `dishesType_ID` int(10) UNSIGNED NOT NULL,
   `orderDate` datetime NOT NULL,
   `serveDate` datetime NOT NULL,
   `count` int(10) UNSIGNED NOT NULL DEFAULT 1,
   `totalPrice` float UNSIGNED NOT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+--
+-- Dumping data for table `bookedmeal`
+--
+
+INSERT INTO `bookedmeal` (`bookedMeal_ID`, `userID`, `bookedRoom`, `dishesType_ID`, `orderDate`, `serveDate`, `count`, `totalPrice`) VALUES
+(1, 7, b'1', 6, '2020-06-02 22:52:45', '2020-06-04 12:23:00', 5, 28),
+(2, 7, b'0', 7, '2020-06-02 23:09:44', '2020-06-03 07:30:00', 1, 2);
 
 -- --------------------------------------------------------
 
@@ -76,10 +82,11 @@ INSERT INTO `bookedroom` (`bookedRoom_ID`, `userID`, `roomID`, `checkInDate`, `c
 (13, 4, 113, '2020-05-15', '2020-05-15', '2020-05-13 09:07:05'),
 (14, 6, 713, '2020-05-15', '2020-05-16', '2020-05-14 18:59:18'),
 (15, 6, 913, '2020-11-05', '2020-11-20', '2020-05-14 19:05:30'),
-(16, 6, 913, '2020-05-15', '2020-12-01', '2020-05-14 19:11:56'),
+(16, 6, 913, '2020-05-15', '2020-11-01', '2020-05-14 19:11:56'),
 (17, 6, 607, '2020-05-16', '2020-12-01', '2020-05-14 19:20:27'),
 (18, 6, 107, '2020-05-15', '2020-11-30', '2020-05-14 20:03:23'),
-(19, 6, 310, '2020-05-15', '2020-11-29', '2020-05-14 20:13:43');
+(19, 6, 310, '2020-05-15', '2020-11-29', '2020-05-14 20:13:43'),
+(20, 7, 713, '2020-06-04', '2020-06-05', '2020-06-02 14:36:17');
 
 -- --------------------------------------------------------
 
@@ -124,11 +131,12 @@ CREATE TABLE `guest` (
 --
 
 INSERT INTO `guest` (`userID`, `username`, `password`, `realName`, `passportID`, `telephoneNumber`, `email`, `operationTime`) VALUES
+(1, 'test', '123', 'zzz', 'TEST123', 123456789, '2579583@test.com', '2020-04-23 14:12:48'),
 (2, 'mika', '12345', 'mmm', 'ER102897', 222555666, '2579583@student.xjtlu.edu.cn', '2020-05-04 14:12:48'),
-(3, 'trigger', '123', 'mike-minjy', 'ER1252363', 18972634381, '26839586@qq.com', '2020-05-04 18:19:46'),
+(3, 'trigger', '123', 'mike sakila', 'ER1252363', 18972634381, '26839586@qq.com', '2020-06-02 10:43:50'),
 (4, 'mikalon', '666', 'mika', 'QS553322', 59283098, '33322_dewd@mail.com', '2020-05-07 13:44:20'),
-(5, 'ayasaki', '23335', 'miuki', 'NS9365605', 1223366778, NULL, '2020-05-08 14:35:02'),
-(6, 'timi', '12356', 'smalion', 'WC33567', 123563216, NULL, '2020-05-11 04:50:03'),
+(5, 'ayasaki', '23335', 'miuki', 'NS9365605', 1223366778, '', '2020-05-08 14:35:02'),
+(6, 'timi', '12356', 'smalion', 'EC335678', 123563216, '', '2020-05-17 12:49:49'),
 (7, 'minicap', '333666', 'mike simon', 'WCMM22233', 22222256, '2553755@123.com', '2020-05-11 06:58:55'),
 (8, 'muniku', '2333666', 'mikunika', 'EC233366', 222369796, '2333@qq.com', '2020-05-13 12:55:34'),
 (9, 'ssscc', 'w2', 'minitab', 'WEVE332', 12389795, '', '2020-05-11 03:05:49');
@@ -140,8 +148,9 @@ INSERT INTO `guest` (`userID`, `username`, `password`, `realName`, `passportID`,
 --
 
 CREATE TABLE `meal` (
-  `dishes` varchar(60) NOT NULL,
+  `dishesType_ID` int(10) UNSIGNED NOT NULL,
   `chefID` tinyint(3) UNSIGNED NOT NULL,
+  `dishes` varchar(60) NOT NULL,
   `price` float UNSIGNED NOT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
@@ -149,35 +158,59 @@ CREATE TABLE `meal` (
 -- Dumping data for table `meal`
 --
 
-INSERT INTO `meal` (`dishes`, `chefID`, `price`) VALUES
-('Shrimp soup', 1, 0),
-('Cauliflower and mushroom stew', 1, 0),
-('spicy chicken nuggets', 1, 0),
-('steamed cod fish', 1, 0),
-('turkey burger', 1, 0),
-('veggie burger', 1, 0),
-('fried egg', 1, 0),
-('Chicken curry', 2, 0),
-('Chicken masala', 2, 0),
-('Mutton Korma', 2, 0),
-('Keema Curry', 2, 0),
-('Mushroom Tikka', 2, 0),
-('fried egg', 2, 0),
-('curry rice', 2, 0),
-('Tofu teriyaki', 3, 0),
-('Shrimp Tempura', 3, 0),
-('Yaki Udon', 3, 0),
-('Chicken Katsu', 3, 0),
-('Salmon sashimi', 3, 0),
-('fried egg', 3, 0),
-('curry rice', 3, 0),
-('Black pepper beef', 4, 0),
-('Pork chowmein', 4, 0),
-('Sweet & sour pork', 4, 0),
-('Gongbao chicken', 4, 0),
-('Pork Jiaozi', 4, 0),
-('Soy glazed pork chops', 4, 0),
-('curry rice', 4, 0);
+INSERT INTO `meal` (`dishesType_ID`, `chefID`, `dishes`, `price`) VALUES
+(1, 1, 'Shrimp soup', 5),
+(2, 1, 'Cauliflower and mushroom stew', 3),
+(3, 1, 'spicy chicken nuggets', 6),
+(4, 1, 'steamed cod fish', 8),
+(5, 1, 'turkey burger', 10),
+(6, 1, 'veggie burger', 7),
+(7, 1, 'fried egg', 2),
+(8, 2, 'Chicken curry', 5),
+(9, 2, 'Chicken masala', 5),
+(10, 2, 'Mutton Korma', 8),
+(11, 2, 'Keema Curry', 5),
+(12, 2, 'Mushroom Tikka', 6),
+(13, 2, 'fried egg', 2),
+(14, 2, 'curry rice', 3),
+(15, 3, 'Tofu teriyaki', 6),
+(16, 3, 'Shrimp Tempura', 7),
+(17, 3, 'Yaki Udon', 6),
+(18, 3, 'Chicken Katsu', 6),
+(19, 3, 'Salmon sashimi', 9),
+(20, 3, 'fried egg', 2),
+(21, 3, 'curry rice', 3),
+(22, 4, 'Black pepper beef', 9),
+(23, 4, 'Pork chowmein', 8),
+(24, 4, 'Sweet & sour pork', 8),
+(25, 4, 'Gongbao chicken', 7),
+(26, 4, 'Pork Jiaozi', 8),
+(27, 4, 'Soy glazed pork chops', 7),
+(28, 4, 'curry rice', 3);
+
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `oneweek`
+--
+
+CREATE TABLE `oneweek` (
+  `day_ID` tinyint(3) UNSIGNED NOT NULL,
+  `day_Name` varchar(10) NOT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+--
+-- Dumping data for table `oneweek`
+--
+
+INSERT INTO `oneweek` (`day_ID`, `day_Name`) VALUES
+(1, 'Monday'),
+(2, 'Tuesday'),
+(3, 'Wednesday'),
+(4, 'Thursday'),
+(5, 'Friday'),
+(6, 'Saturday'),
+(7, 'Sunday');
 
 -- --------------------------------------------------------
 
@@ -354,31 +387,32 @@ INSERT INTO `roomtype` (`roomTypeID`, `roomType`) VALUES
 --
 
 CREATE TABLE `schedule` (
-  `weekday` varchar(10) NOT NULL,
-  `chefID` tinyint(3) UNSIGNED NOT NULL
+  `weekday_ID` int(10) UNSIGNED NOT NULL,
+  `chefID` tinyint(3) UNSIGNED NOT NULL,
+  `day_ID` tinyint(3) UNSIGNED NOT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
 --
 -- Dumping data for table `schedule`
 --
 
-INSERT INTO `schedule` (`weekday`, `chefID`) VALUES
-('Monday', 1),
-('Tuesday', 1),
-('Wednesday', 1),
-('Thursday', 1),
-('Friday', 1),
-('Wednesday', 2),
-('Thursday', 2),
-('Friday', 2),
-('Saturday', 2),
-('Sunday', 2),
-('Monday', 3),
-('Thursday', 3),
-('Saturday', 3),
-('Tuesday', 4),
-('Saturday', 4),
-('Sunday', 4);
+INSERT INTO `schedule` (`weekday_ID`, `chefID`, `day_ID`) VALUES
+(1, 1, 1),
+(2, 1, 2),
+(3, 1, 3),
+(4, 1, 4),
+(5, 1, 5),
+(6, 2, 3),
+(7, 2, 4),
+(8, 2, 5),
+(9, 2, 6),
+(10, 2, 7),
+(11, 3, 1),
+(12, 3, 4),
+(13, 3, 6),
+(14, 4, 2),
+(15, 4, 6),
+(16, 4, 7);
 
 -- --------------------------------------------------------
 
@@ -400,7 +434,7 @@ CREATE TABLE `staff` (
 
 INSERT INTO `staff` (`staffID`, `username`, `password`, `telephoneNumber`, `operationTime`) VALUES
 (1, 'mike', '2333666', 8615833356871, '2020-05-14 18:58:33'),
-(2, 'tiger', '2333', 987658632, '2020-05-13 18:58:47'),
+(2, 'tigger', '2333', 987658632, '2020-05-19 12:58:08'),
 (3, 'scott', '111', 2123535768, '2020-05-09 02:03:31');
 
 --
@@ -412,9 +446,8 @@ INSERT INTO `staff` (`staffID`, `username`, `password`, `telephoneNumber`, `oper
 --
 ALTER TABLE `bookedmeal`
   ADD PRIMARY KEY (`bookedMeal_ID`),
-  ADD KEY `fk_BookedMeal_BookedRoom` (`bookedRoom_ID`),
-  ADD KEY `fk_BookedMeal_Chef` (`chefID`),
-  ADD KEY `fk_BookedMeal_Meal` (`dishes`);
+  ADD KEY `fk_BookedMeal_Guest` (`userID`),
+  ADD KEY `fk_BookedMeal_Meal` (`dishesType_ID`);
 
 --
 -- Indexes for table `bookedroom`
@@ -441,8 +474,14 @@ ALTER TABLE `guest`
 -- Indexes for table `meal`
 --
 ALTER TABLE `meal`
-  ADD KEY `fk_Meal_Chef` (`chefID`),
-  ADD KEY `dishes` (`dishes`);
+  ADD PRIMARY KEY (`dishesType_ID`),
+  ADD KEY `fk_Meal_Chef` (`chefID`);
+
+--
+-- Indexes for table `oneweek`
+--
+ALTER TABLE `oneweek`
+  ADD PRIMARY KEY (`day_ID`);
 
 --
 -- Indexes for table `room`
@@ -461,7 +500,9 @@ ALTER TABLE `roomtype`
 -- Indexes for table `schedule`
 --
 ALTER TABLE `schedule`
-  ADD KEY `fk_Schedule_Chef` (`chefID`);
+  ADD PRIMARY KEY (`weekday_ID`),
+  ADD KEY `fk_Schedule_Chef` (`chefID`),
+  ADD KEY `fk_Schedule_OneWeek` (`day_ID`);
 
 --
 -- Indexes for table `staff`
@@ -477,13 +518,13 @@ ALTER TABLE `staff`
 -- AUTO_INCREMENT for table `bookedmeal`
 --
 ALTER TABLE `bookedmeal`
-  MODIFY `bookedMeal_ID` int(10) UNSIGNED NOT NULL AUTO_INCREMENT;
+  MODIFY `bookedMeal_ID` int(10) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=3;
 
 --
 -- AUTO_INCREMENT for table `bookedroom`
 --
 ALTER TABLE `bookedroom`
-  MODIFY `bookedRoom_ID` int(10) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=20;
+  MODIFY `bookedRoom_ID` int(10) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=21;
 
 --
 -- AUTO_INCREMENT for table `chef`
@@ -498,10 +539,28 @@ ALTER TABLE `guest`
   MODIFY `userID` int(10) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=10;
 
 --
+-- AUTO_INCREMENT for table `meal`
+--
+ALTER TABLE `meal`
+  MODIFY `dishesType_ID` int(10) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=29;
+
+--
+-- AUTO_INCREMENT for table `oneweek`
+--
+ALTER TABLE `oneweek`
+  MODIFY `day_ID` tinyint(3) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=8;
+
+--
 -- AUTO_INCREMENT for table `roomtype`
 --
 ALTER TABLE `roomtype`
   MODIFY `roomTypeID` tinyint(3) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=5;
+
+--
+-- AUTO_INCREMENT for table `schedule`
+--
+ALTER TABLE `schedule`
+  MODIFY `weekday_ID` int(10) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=17;
 
 --
 -- AUTO_INCREMENT for table `staff`
@@ -517,9 +576,8 @@ ALTER TABLE `staff`
 -- Constraints for table `bookedmeal`
 --
 ALTER TABLE `bookedmeal`
-  ADD CONSTRAINT `fk_BookedMeal_BookedRoom` FOREIGN KEY (`bookedRoom_ID`) REFERENCES `bookedroom` (`bookedRoom_ID`),
-  ADD CONSTRAINT `fk_BookedMeal_Chef` FOREIGN KEY (`chefID`) REFERENCES `chef` (`chefID`),
-  ADD CONSTRAINT `fk_BookedMeal_Meal` FOREIGN KEY (`dishes`) REFERENCES `meal` (`dishes`);
+  ADD CONSTRAINT `fk_BookedMeal_Guest` FOREIGN KEY (`userID`) REFERENCES `guest` (`userID`),
+  ADD CONSTRAINT `fk_BookedMeal_Meal` FOREIGN KEY (`dishesType_ID`) REFERENCES `meal` (`dishesType_ID`);
 
 --
 -- Constraints for table `bookedroom`
@@ -544,11 +602,10 @@ ALTER TABLE `room`
 -- Constraints for table `schedule`
 --
 ALTER TABLE `schedule`
-  ADD CONSTRAINT `fk_Schedule_Chef` FOREIGN KEY (`chefID`) REFERENCES `chef` (`chefID`);
+  ADD CONSTRAINT `fk_Schedule_Chef` FOREIGN KEY (`chefID`) REFERENCES `chef` (`chefID`),
+  ADD CONSTRAINT `fk_Schedule_OneWeek` FOREIGN KEY (`day_ID`) REFERENCES `oneweek` (`day_ID`);
 COMMIT;
 
 /*!40101 SET CHARACTER_SET_CLIENT=@OLD_CHARACTER_SET_CLIENT */;
 /*!40101 SET CHARACTER_SET_RESULTS=@OLD_CHARACTER_SET_RESULTS */;
 /*!40101 SET COLLATION_CONNECTION=@OLD_COLLATION_CONNECTION */;
-
-/*END FILE*/

@@ -4,6 +4,21 @@ import java.util.Scanner;
 
 public class HMS {
 
+    /**
+     * Prevent create an object of this class from outside this package.<br>
+     * The function of this Hotel Management System is capable to be extended in the future.<br>
+     * Due to the consideration of concurrency, it might be able to create object in future.
+     */
+    private HMS(){
+
+    }
+
+    /**
+     * The welcome panel for user to engage in the system.<br>
+     * It is an entrance of the whole program.
+     *
+     * @param args
+     */
     public static void main(String[] args) {
 
         try {
@@ -12,29 +27,36 @@ public class HMS {
             System.out.println("                                 *     Welcome to use this system!     *");
             System.out.println("                                 *-------------------------------------*");
 
-            processing();
+            processing();//The main processing branch for the entire program.
 
-            System.out.println("Bye");
+            System.out.println("Bye");//It shows at the end of the program.
 
         } catch (Exception e) {
             e.printStackTrace();
 //            if (e.getMessage() != null) {
 //                System.err.println(e.getMessage());
 //            }
+        } finally {
+            System.exit(0);//If there are float window here, it will force it to close.
         }
     }
 
+    /**
+     * All function of this system processed in this method.
+     *
+     * @throws Exception
+     */
     private static void processing() throws Exception {
-        byte step = welcome();
-        int[] userInformation;
-        int ID = 0;
+        byte step = welcome();//First, show the initial welcome panel.
+        int[] userInformation;//An int array to store two parameters: 1. Which branch at next step  2. ID of staff or guest.
+        int ID = 0;//Store the log in ID for next step processing.
         while (true) {
             switch (step) {
-                case -1:
+                case -1://Choose to quit the whole program
                     System.out.println();
                     return;
-                case 0:
-                    step = welcome();
+                case 0://Back to the initial page
+                    step = welcome();//Hold the enter code of next step
                     break;
                 //Dispose the information of the first step
                 case 1://--------------------------------------Guest Mode selected
@@ -51,7 +73,7 @@ public class HMS {
                     System.out.println();
                     userInformation = Guest.login();
                     step = (byte) userInformation[0];
-                    ID = userInformation[1];//Get the login person
+                    ID = userInformation[1];//Get the login guest
                     break;
                 case 4://--------------------------------------Guest Sign Up selected
                     System.out.println();
@@ -61,8 +83,8 @@ public class HMS {
                     System.out.println();
                     step = Guest.update();
                     break;
-                case 6://--------------------------------------Go back to previous page
-                case 9://--------------------------------------Go back to previous page
+                case 6://--------------------------------------Go back to the welcome page
+                case 9://--------------------------------------Go back to the welcome page
                     System.out.println();
                     step = 0;
                     break;
@@ -70,88 +92,88 @@ public class HMS {
                     System.out.println();
                     userInformation = Staff.login();
                     step = (byte) userInformation[0];
-                    ID = userInformation[1];//Get the login person
+                    ID = userInformation[1];//Get the login staff
                     break;
                 case 8://--------------------------------------Staff password change selected
                     System.out.println();
                     step = Staff.changePassword();
                     break;
                 //Dispose the information of the third step from guest
-                case 10:
+                case 10://--------------------------------------Guest Login successful
                     System.out.println();
                     userInformation = Booking.startInterface(ID);
                     step = (byte) userInformation[0];
                     ID = userInformation[1];
                     break;
-                case 11:
+                case 11://--------------------------------------Guest Book Room selected
                     System.out.println();
                     userInformation = Booking.bookRooms(ID);
                     step = (byte) userInformation[0];
                     ID = userInformation[1];
                     break;
-                case 12:
+                case 12://--------------------------------------Guest Modify Room selected
                     System.out.println();
                     userInformation = Booking.modifyRooms(ID);
                     step = (byte) userInformation[0];
                     ID = userInformation[1];
                     break;
-                case 13:
+                case 13://--------------------------------------Guest Book Meal selected
                     System.out.println();
                     userInformation = Booking.bookMeal(ID);
                     step = (byte) userInformation[0];
                     ID = userInformation[1];
                     break;
-                case 14:
+                case 14://--------------------------------------Guest Cancel Meal selected
                     System.out.println();
                     userInformation = Booking.cancelMeal(ID);
                     step = (byte) userInformation[0];
                     ID = userInformation[1];
                     break;
-                case 15:
+                case 15://--------------------------------------Guest update personal information inside
                     System.out.println();
                     userInformation = Booking.update(ID);
                     step = (byte) userInformation[0];
                     ID = userInformation[1];
                     break;
                 //Dispose the information of the third step from staff
-                case 16:
+                case 16://--------------------------------------Staff Login successful
                     System.out.println();
                     userInformation = StaffOperation.startInterface(ID);
                     step = (byte) userInformation[0];
                     ID = userInformation[1];
                     break;
-                case 17:
+                case 17://--------------------------------------Staff Check Booked Rooms
                     System.out.println();
                     userInformation = StaffOperation.roomManagement(ID);
                     step = (byte) userInformation[0];
                     ID = userInformation[1];
                     break;
-                case 18:
+                case 18://--------------------------------------Staff Check Booked Meal
                     System.out.println();
                     userInformation = StaffOperation.mealManagement(ID);
                     step = (byte) userInformation[0];
                     ID = userInformation[1];
                     break;
-                case 19:
+                case 19://--------------------------------------Staff change password inside
                     System.out.println();
                     userInformation = StaffOperation.changePassword(ID);
                     step = (byte) userInformation[0];
                     ID = userInformation[1];
                     break;
-                //Dispose the information of the third step from guest
-                case 20:
+                //Dispose the information of the fourth step from guest
+                case 20://--------------------------------------Guest change Check-In Date selected
                     System.out.println();
                     userInformation = Booking.modifyLiveInDate(ID);
                     step = (byte) userInformation[0];
                     ID = userInformation[1];
                     break;
-                case 21:
+                case 21://--------------------------------------Guest change Check-Out Date selected
                     System.out.println();
                     userInformation = Booking.modifyLeaveDate(ID);
                     step = (byte) userInformation[0];
                     ID = userInformation[1];
                     break;
-                case 22:
+                case 22://--------------------------------------Guest Cancel Booked Room
                     System.out.println();
                     userInformation = Booking.cancelBookedRoom(ID);
                     step = (byte) userInformation[0];
@@ -161,6 +183,11 @@ public class HMS {
         }
     }
 
+    /**
+     * The initial page of control panel in this program.
+     *
+     * @return byte key
+     */
     private static byte welcome() {
         DB_Utility.printCurrentTime();
         Scanner scanner = new Scanner(System.in);

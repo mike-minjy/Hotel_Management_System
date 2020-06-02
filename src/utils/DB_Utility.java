@@ -10,13 +10,17 @@ import java.util.ResourceBundle;
 
 public class DB_Utility {
 
+    /**
+     * Prevent create an object of this class.<br>
+     * This class is only an <code>util</code> class.
+     */
     private DB_Utility() {
     }
 
     /**
      * Connect with database
      *
-     * @return
+     * @return Connection
      * @throws Exception
      */
     protected static Connection connect() throws Exception {
@@ -24,12 +28,14 @@ public class DB_Utility {
         String url = resource.getString("URL");
         String username = resource.getString("administrator");
         String password = resource.getString("password");
-        Connection connection = DriverManager.getConnection(url, username, password);
-        return connection;
+        return DriverManager.getConnection(url, username, password);
+        //Initialise the connection with database schema.
+//        Connection connection = DriverManager.getConnection(url, username, password);
+//        return connection;
     }
 
     /**
-     * give a current time feedback to user
+     * Give a current time feedback to user.
      */
     public static void printCurrentTime() {
         System.out.println("************************************");
@@ -58,7 +64,7 @@ public class DB_Utility {
     }
 
     /**
-     * Overload the close(Connection,Statement,ResultSet) method which did not have created an ResultSet instance.
+     * Overload the <code>close(Connection,Statement,ResultSet)</code> method which did not have created an ResultSet instance.
      *
      * @param connection
      * @param statement

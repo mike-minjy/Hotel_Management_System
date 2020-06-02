@@ -18,7 +18,7 @@ class ShowWindow extends JFrame {
         ResultSetMetaData rsMetaData = rs.getMetaData();
         defaultModel = new DefaultTableModel(null, title);
         table = new JTable(defaultModel);
-        table.setPreferredScrollableViewportSize(new Dimension(600, 600));
+        table.setPreferredScrollableViewportSize(new Dimension(600, 380));
         JScrollPane s = new JScrollPane(table);
         JPanel panel = new JPanel();
 
@@ -33,7 +33,7 @@ class ShowWindow extends JFrame {
                 if (row == rsMetaData.getColumnCount()) {
                     break;
                 }
-                row += 1;
+                row++;
             }
             defaultModel.addRow(title);
         }

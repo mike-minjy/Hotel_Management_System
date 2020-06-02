@@ -1,20 +1,30 @@
+
 SET FOREIGN_KEY_CHECKS = 0;
 
+-- ----------------------------
+-- Table structure for bookedmeal
+-- ----------------------------
 DROP TABLE IF EXISTS `bookedmeal`;
 CREATE TABLE `bookedmeal`  (
   `bookedMeal_ID` INT UNSIGNED PRIMARY KEY AUTO_INCREMENT,
-  `bookedRoom_ID` INT UNSIGNED NULL DEFAULT NULL,
-  `dishesType_ID` INT UNSIGNED NULL DEFAULT NULL,
-  `weekday_ID` INT UNSIGNED NULL DEFAULT NULL,
+  `userID` INT UNSIGNED NOT NULL,
+  `bookedRoom` bit(1) NOT NULL,
+  `dishesType_ID` INT UNSIGNED NOT NULL,
   `orderDate` DATETIME NOT NULL,
   `serveDate` DATETIME NOT NULL,
   `count` INT UNSIGNED NOT NULL DEFAULT 1,
   `totalPrice` FLOAT UNSIGNED NOT NULL,
-  CONSTRAINT `fk_BookedMeal_BookedRoom` FOREIGN KEY (`bookedRoom_ID`) REFERENCES `bookedroom` (`bookedRoom_ID`),
-  CONSTRAINT `fk_BookedMeal_Meal` FOREIGN KEY (`dishesType_ID`) REFERENCES `meal` (`dishesType_ID`),
-  CONSTRAINT `fk_BookedMeal_Schedule` FOREIGN KEY (`weekday_ID`) REFERENCES `schedule` (`weekday_ID`)
+  CONSTRAINT `fk_BookedMeal_Guest` FOREIGN KEY (`userID`) REFERENCES `guest` (`userID`),
+  CONSTRAINT `fk_BookedMeal_Meal` FOREIGN KEY (`dishesType_ID`) REFERENCES `meal` (`dishesType_ID`)
 );
 
+-- ----------------------------
+-- Records of bookedmeal
+-- ----------------------------
+
+-- ----------------------------
+-- Table structure for bookedroom
+-- ----------------------------
 DROP TABLE IF EXISTS `bookedroom`;
 CREATE TABLE `bookedroom`  (
   `bookedRoom_ID` INT UNSIGNED PRIMARY KEY AUTO_INCREMENT,
@@ -27,6 +37,9 @@ CREATE TABLE `bookedroom`  (
   CONSTRAINT `fk_BookedRoom_Room` FOREIGN KEY (`roomID`) REFERENCES `room` (`roomID`)
 );
 
+-- ----------------------------
+-- Records of bookedroom
+-- ----------------------------
 INSERT INTO `bookedroom` VALUES (1, 2, 113, '2020-05-16', '2020-05-18', '2020-05-13 05:36:02');
 INSERT INTO `bookedroom` VALUES (2, 3, 210, '2020-05-06', '2020-05-22', '2020-05-05 12:38:51');
 INSERT INTO `bookedroom` VALUES (3, 4, 707, '2020-04-23', '2020-05-19', '2020-04-09 15:38:59');
@@ -46,19 +59,27 @@ INSERT INTO `bookedroom` VALUES (16, 6, 913, '2020-05-15', '2020-11-01', '2020-0
 INSERT INTO `bookedroom` VALUES (17, 6, 607, '2020-05-16', '2020-12-01', '2020-05-15 03:20:27');
 INSERT INTO `bookedroom` VALUES (18, 6, 107, '2020-05-15', '2020-11-30', '2020-05-15 04:03:23');
 INSERT INTO `bookedroom` VALUES (19, 6, 310, '2020-05-15', '2020-11-29', '2020-05-15 04:13:43');
-INSERT INTO `bookedroom` VALUES (28, 6, 513, '2020-05-18', '2020-05-18', '2020-05-18 00:20:58');
 
+-- ----------------------------
+-- Table structure for chef
+-- ----------------------------
 DROP TABLE IF EXISTS `chef`;
 CREATE TABLE `chef`  (
   `chefID` TINYINT UNSIGNED PRIMARY KEY AUTO_INCREMENT,
   `chefName` varchar(20) NOT NULL
 );
 
+-- ----------------------------
+-- Records of chef
+-- ----------------------------
 INSERT INTO `chef` VALUES (1, 'Karen Adam');
 INSERT INTO `chef` VALUES (2, 'Hari Philip');
 INSERT INTO `chef` VALUES (3, 'Thalia Hensley');
 INSERT INTO `chef` VALUES (4, 'Nisha Moss');
 
+-- ----------------------------
+-- Table structure for guest
+-- ----------------------------
 DROP TABLE IF EXISTS `guest`;
 CREATE TABLE `guest`  (
   `userID` INT UNSIGNED PRIMARY KEY AUTO_INCREMENT,
@@ -71,16 +92,22 @@ CREATE TABLE `guest`  (
   `operationTime` timestamp NOT NULL ON UPDATE CURRENT_TIMESTAMP
 );
 
+-- ----------------------------
+-- Records of guest
+-- ----------------------------
 INSERT INTO `guest` VALUES (1, 'test', '123', 'zzz', 'TEST123', 123456789, '2579583@test.com', '2020-04-23 22:12:48');
 INSERT INTO `guest` VALUES (2, 'mika', '12345', 'mmm', 'ER102897', 222555666, '2579583@student.xjtlu.edu.cn', '2020-05-04 22:12:48');
-INSERT INTO `guest` VALUES (3, 'trigger', '123', 'mitimana', 'ER1252363', 18972634381, '26839586@qq.com', '2020-05-05 02:19:46');
+INSERT INTO `guest` VALUES (3, 'trigger', '123', 'mike sakila', 'ER1252363', 18972634381, '26839586@qq.com', '2020-06-02 18:43:50');
 INSERT INTO `guest` VALUES (4, 'mikalon', '666', 'mika', 'QS553322', 59283098, '33322_dewd@mail.com', '2020-05-07 21:44:20');
-INSERT INTO `guest` VALUES (5, 'sikali', '23335', 'miuki', 'NS9365605', 1223366778, '', '2020-05-08 22:35:02');
+INSERT INTO `guest` VALUES (5, 'ayasaki', '23335', 'miuki', 'NS9365605', 1223366778, '', '2020-05-08 22:35:02');
 INSERT INTO `guest` VALUES (6, 'timi', '12356', 'smalion', 'EC335678', 123563216, '', '2020-05-17 20:49:49');
 INSERT INTO `guest` VALUES (7, 'minicap', '333666', 'mike simon', 'WCMM22233', 22222256, '2553755@123.com', '2020-05-11 14:58:55');
 INSERT INTO `guest` VALUES (8, 'muniku', '2333666', 'mikunika', 'EC233366', 222369796, '2333@qq.com', '2020-05-13 20:55:34');
 INSERT INTO `guest` VALUES (9, 'ssscc', 'w2', 'minitab', 'WEVE332', 12389795, '', '2020-05-11 11:05:49');
 
+-- ----------------------------
+-- Table structure for meal
+-- ----------------------------
 DROP TABLE IF EXISTS `meal`;
 CREATE TABLE `meal`  (
   `dishesType_ID` INT UNSIGNED PRIMARY KEY AUTO_INCREMENT,
@@ -90,6 +117,9 @@ CREATE TABLE `meal`  (
   CONSTRAINT `fk_Meal_Chef` FOREIGN KEY (`chefID`) REFERENCES `chef` (`chefID`)
 );
 
+-- ----------------------------
+-- Records of meal
+-- ----------------------------
 INSERT INTO `meal` VALUES (1, 1, 'Shrimp soup', 5);
 INSERT INTO `meal` VALUES (2, 1, 'Cauliflower and mushroom stew', 3);
 INSERT INTO `meal` VALUES (3, 1, 'spicy chicken nuggets', 6);
@@ -119,6 +149,29 @@ INSERT INTO `meal` VALUES (26, 4, 'Pork Jiaozi', 8);
 INSERT INTO `meal` VALUES (27, 4, 'Soy glazed pork chops', 7);
 INSERT INTO `meal` VALUES (28, 4, 'curry rice', 3);
 
+-- ----------------------------
+-- Table structure for oneweek
+-- ----------------------------
+DROP TABLE IF EXISTS `oneweek`;
+CREATE TABLE `oneweek`  (
+  `day_ID` TINYINT UNSIGNED PRIMARY KEY AUTO_INCREMENT,
+  `day_Name` varchar(10) NOT NULL
+);
+
+-- ----------------------------
+-- Records of oneweek
+-- ----------------------------
+INSERT INTO `oneweek` VALUES (1, 'Monday');
+INSERT INTO `oneweek` VALUES (2, 'Tuesday');
+INSERT INTO `oneweek` VALUES (3, 'Wednesday');
+INSERT INTO `oneweek` VALUES (4, 'Thursday');
+INSERT INTO `oneweek` VALUES (5, 'Friday');
+INSERT INTO `oneweek` VALUES (6, 'Saturday');
+INSERT INTO `oneweek` VALUES (7, 'Sunday');
+
+-- ----------------------------
+-- Table structure for room
+-- ----------------------------
 DROP TABLE IF EXISTS `room`;
 CREATE TABLE `room`  (
   `roomID` INT UNSIGNED PRIMARY KEY,
@@ -126,6 +179,9 @@ CREATE TABLE `room`  (
   CONSTRAINT `fk_Room_RoomType` FOREIGN KEY (`roomTypeID`) REFERENCES `roomtype` (`roomTypeID`)
 );
 
+-- ----------------------------
+-- Records of room
+-- ----------------------------
 INSERT INTO `room` VALUES (101, 1);
 INSERT INTO `room` VALUES (102, 1);
 INSERT INTO `room` VALUES (111, 1);
@@ -257,42 +313,58 @@ INSERT INTO `room` VALUES (813, 4);
 INSERT INTO `room` VALUES (913, 4);
 INSERT INTO `room` VALUES (1013, 4);
 
+-- ----------------------------
+-- Table structure for roomtype
+-- ----------------------------
 DROP TABLE IF EXISTS `roomtype`;
 CREATE TABLE `roomtype`  (
   `roomTypeID` TINYINT UNSIGNED PRIMARY KEY AUTO_INCREMENT,
   `roomType` varchar(30) NOT NULL
 );
 
+-- ----------------------------
+-- Records of roomtype
+-- ----------------------------
 INSERT INTO `roomtype` VALUES (1, 'Large double bed');
 INSERT INTO `roomtype` VALUES (2, 'Large single bed');
 INSERT INTO `roomtype` VALUES (3, 'Small single bed');
 INSERT INTO `roomtype` VALUES (4, 'VIP Room');
 
+-- ----------------------------
+-- Table structure for schedule
+-- ----------------------------
 DROP TABLE IF EXISTS `schedule`;
 CREATE TABLE `schedule`  (
   `weekday_ID` INT UNSIGNED PRIMARY KEY AUTO_INCREMENT,
-  `weekday` varchar(10) NOT NULL,
   `chefID` TINYINT UNSIGNED NOT NULL,
-  CONSTRAINT `fk_Schedule_Chef` FOREIGN KEY (`chefID`) REFERENCES `chef` (`chefID`)
+  `day_ID` TINYINT UNSIGNED NOT NULL,
+  CONSTRAINT `fk_Schedule_Chef` FOREIGN KEY (`chefID`) REFERENCES `chef` (`chefID`),
+  CONSTRAINT `fk_Schedule_OneWeek` FOREIGN KEY (`day_ID`) REFERENCES `oneweek` (`day_ID`)
 );
 
-INSERT INTO `schedule` VALUES (1, 'Monday', 1);
-INSERT INTO `schedule` VALUES (2, 'Tuesday', 1);
-INSERT INTO `schedule` VALUES (3, 'Wednesday', 1);
-INSERT INTO `schedule` VALUES (4, 'Thursday', 1);
-INSERT INTO `schedule` VALUES (5, 'Friday', 1);
-INSERT INTO `schedule` VALUES (6, 'Wednesday', 2);
-INSERT INTO `schedule` VALUES (7, 'Thursday', 2);
-INSERT INTO `schedule` VALUES (8, 'Friday', 2);
-INSERT INTO `schedule` VALUES (9, 'Saturday', 2);
-INSERT INTO `schedule` VALUES (10, 'Sunday', 2);
-INSERT INTO `schedule` VALUES (11, 'Monday', 3);
-INSERT INTO `schedule` VALUES (12, 'Thursday', 3);
-INSERT INTO `schedule` VALUES (13, 'Saturday', 3);
-INSERT INTO `schedule` VALUES (14, 'Tuesday', 4);
-INSERT INTO `schedule` VALUES (15, 'Saturday', 4);
-INSERT INTO `schedule` VALUES (16, 'Sunday', 4);
+-- ----------------------------
+-- Records of schedule
+-- ----------------------------
+INSERT INTO `schedule` VALUES (1, 1, 1);
+INSERT INTO `schedule` VALUES (2, 1, 2);
+INSERT INTO `schedule` VALUES (3, 1, 3);
+INSERT INTO `schedule` VALUES (4, 1, 4);
+INSERT INTO `schedule` VALUES (5, 1, 5);
+INSERT INTO `schedule` VALUES (6, 2, 3);
+INSERT INTO `schedule` VALUES (7, 2, 4);
+INSERT INTO `schedule` VALUES (8, 2, 5);
+INSERT INTO `schedule` VALUES (9, 2, 6);
+INSERT INTO `schedule` VALUES (10, 2, 7);
+INSERT INTO `schedule` VALUES (11, 3, 1);
+INSERT INTO `schedule` VALUES (12, 3, 4);
+INSERT INTO `schedule` VALUES (13, 3, 6);
+INSERT INTO `schedule` VALUES (14, 4, 2);
+INSERT INTO `schedule` VALUES (15, 4, 6);
+INSERT INTO `schedule` VALUES (16, 4, 7);
 
+-- ----------------------------
+-- Table structure for staff
+-- ----------------------------
 DROP TABLE IF EXISTS `staff`;
 CREATE TABLE `staff`  (
   `staffID` INT UNSIGNED PRIMARY KEY AUTO_INCREMENT,
@@ -302,6 +374,9 @@ CREATE TABLE `staff`  (
   `operationTime` timestamp NULL DEFAULT NULL ON UPDATE CURRENT_TIMESTAMP
 );
 
+-- ----------------------------
+-- Records of staff
+-- ----------------------------
 INSERT INTO `staff` VALUES (1, 'mike', '2333666', 8615833356871, '2020-05-15 02:58:33');
 INSERT INTO `staff` VALUES (2, 'tigger', '2333', 987658632, '2020-05-19 20:58:08');
 INSERT INTO `staff` VALUES (3, 'scott', '111', 2123535768, '2020-05-09 10:03:31');

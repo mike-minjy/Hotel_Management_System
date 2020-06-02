@@ -11,9 +11,17 @@ import java.util.regex.Pattern;
 
 public class Guest {
 
+    /**
+     * Prevent create an object of this class.
+     */
     private Guest() {
     }
 
+    /**
+     * The second control panel of entire program. (Guest Path)
+     *
+     * @return byte key
+     */
     public static byte startInterface() {
         DB_Utility.printCurrentTime();
         Scanner scanner = new Scanner(System.in);
@@ -54,10 +62,17 @@ public class Guest {
         }
     }
 
+    /**
+     * The Login implementation method <code>login()</code><br>
+     * It obtains two parameter from <code>verify()</code> method
+     * to check whether "username" and "password" are existing in guest table.
+     *
+     * @return int array: byte key, guestID
+     */
     public static int[] login() {
         int[] ints = {10, 0};
         Map<String, String> userLoginInfo = verify();
-        if (userLoginInfo == null) {
+        if (userLoginInfo == null) {//If user input equals to "Return"
             ints[0] = 1;
             return ints;
         }
@@ -100,6 +115,15 @@ public class Guest {
         return ints;
     }
 
+    /**
+     * The specific implementation of <code>verify()</code> method.<br>
+     * It utilise <code>HashMap</code> to handle two inputs:
+     * "username" and "password"<br>
+     * If user input "Return" (which is case-insensitive), it will return to previous page.
+     * And the empty input is not acceptable, it will give user an "Exception" message.
+     *
+     * @return Map (contains user login information)
+     */
     protected static Map<String, String> verify() {
         DB_Utility.printCurrentTime();
         Scanner scanner = new Scanner(System.in);
@@ -123,7 +147,9 @@ public class Guest {
             if (!username.trim().isEmpty() && !password.trim().isEmpty()) {
                 break;
             } else {
+                System.out.println("===================================");
                 System.out.println("Your username or password is empty.");
+                System.out.println("===================================");
             }
         }
         personalInfo.put("username", username);
@@ -131,11 +157,18 @@ public class Guest {
         return personalInfo;
     }
 
+    /**
+     * The Sign Up implementation method <code>register()</code><br>
+     * It is capable to get valid information from user via <code>getInfo()</code> method.<br>
+     * Finally, this method will load data into <code>guest</code> table.
+     *
+     * @return byte key
+     */
     public static byte register() {
 
         String[] registerInfo = getInfo();
 
-        if (registerInfo == null) {
+        if (registerInfo == null) {//If "Return" input get here
             return 1;
         }
 
@@ -172,6 +205,22 @@ public class Guest {
         return 1;
     }
 
+    /**
+     * The detail implementation of how to get information from user.<br>
+     * It will require user to input information in sequence:<br>
+     * <pre>
+     *     1. Username
+     *     2. Password
+     *     3. Real Name
+     *     4. Passport ID
+     *     5. Phone Number
+     *     6. Email (Optional)
+     * </pre>
+     * The user inputs will be checked by regular expression.<br>
+     * User could type in "Return" (case-insensitive) to cancel sign up progress.
+     *
+     * @return String array (contains formatted user information)
+     */
     private static String[] getInfo() {
         DB_Utility.printCurrentTime();
         Scanner scanner = new Scanner(System.in);
@@ -286,6 +335,15 @@ public class Guest {
         return personalInfo;
     }
 
+    /**
+     * User input "Return" (case-insensitive) means cancel input and back to previous options.<br>
+     * It could give an accurate "Exception" message to user.
+     *
+     * @param scanner
+     * @param information
+     * @param repeated
+     * @return String (Not empty)
+     */
     protected static String verifyEmpty(Scanner scanner, String information, String repeated) {
         String input;
         input = scanner.nextLine().trim();
@@ -306,9 +364,16 @@ public class Guest {
         return input;
     }
 
-    //It is more reasonable to be accessible after user login his/her account
-    //But I can create another update(int ID) method to implement the information changes after login
-    public static byte update() {//It is also possible to use regular expression to verify the information.
+    /**
+     * The user should type in their "username" and "password" ar first.<br>
+     * It is more reasonable to be accessible after user login his/her account.<br>
+     * Thus, I have created another <code>update(int userID)</code> method
+     * to implement the information changes after user login their account.<br>
+     * It is also used regular expression to verify the information.
+     *
+     * @return byte key
+     */
+    public static byte update() {
         Map<String, String> loginVerification = verify();
         if (loginVerification == null) {
             return 1;
@@ -364,6 +429,20 @@ public class Guest {
         return normalReturn;
     }
 
+    /**
+     * It would be "shared" with another <code>update(int userID)</code> method in
+     * <code>Booking</code> class.<br>
+     * It supports transaction and regular expression verification.<br>
+     * User could withdraw their changes via transaction.
+     *
+     * @param repeated "Please type in "
+     * @param scanner
+     * @param connection
+     * @param preparedStatement
+     * @param resultSet
+     * @return byte key
+     * @throws Exception
+     */
     protected static byte sharedUpdate(String repeated, Scanner scanner, Connection connection, PreparedStatement preparedStatement, ResultSet resultSet) throws Exception {
         String sql, changeInfo, input;
         Map<String, String> attributes = new HashMap<>();
@@ -373,7 +452,7 @@ public class Guest {
         attributes.put("4", "Passport ID");
         attributes.put("5", "Phone Number");
         attributes.put("6", "Email");
-        connection.setAutoCommit(false);        //Start transaction
+        connection.setAutoCommit(false);//Start transaction
 
         loopFlag:
         while (true) {
@@ -559,6 +638,13 @@ public class Guest {
         }
     }
 
+    /**
+     * The Username of different user cannot be the same one.<br>
+     * Thus, this method created for repeated Username checking.
+     *
+     * @param input
+     * @return boolean (Username exist or not)
+     */
     private static boolean checkUsername(String input) {
 
         Connection connection = null;

@@ -8,6 +8,10 @@ import java.util.Scanner;
 import java.util.regex.Pattern;
 
 public class StaffOperation {
+
+    /**
+     * Prevent create an object of this class.
+     */
     private StaffOperation() {
     }
 
@@ -230,14 +234,48 @@ public class StaffOperation {
 
     private static void displayAnOrder(String guestRealName) {
         String sql = "SELECT bookedMeal_ID AS 'Order Code',chefName AS 'Chef Name',dishes AS 'Dish Name',serveDate AS 'Service Date',count AS 'Total Count',totalPrice AS 'Total Price' FROM BookedMeal NATURAL JOIN meal NATURAL JOIN chef NATURAL JOIN guest WHERE realName = '"+guestRealName+"'";
-        TablePrinter.display(sql, "The Meal Orders of Guest: "+guestRealName);
+        boolean isExist = verifyExist(sql);
+        if (isExist) {
+            TablePrinter.display(sql, "The Meal Orders of Guest: "+guestRealName);
+        }else {
+            System.out.println("*********");
+            System.out.println("Empty Set");
+            System.out.println("*********");
+        }
         System.out.println();
     }
 
     private static void displayAllMealOrder() {
         String sql = "SELECT realName AS 'Real Name of Guest', bookedMeal_ID AS 'Order Code',chefName AS 'Chef Name',dishes AS 'Dish Name',serveDate AS 'Service Date',count AS 'Total Count',totalPrice AS 'Total Price' FROM BookedMeal NATURAL JOIN meal NATURAL JOIN chef NATURAL JOIN guest";
-        TablePrinter.display(sql, "The Meal Orders of Guests");
+        boolean isExist = verifyExist(sql);
+        if (isExist) {
+            TablePrinter.display(sql, "The Meal Orders of Guests");
+        }else {
+            System.out.println("*********");
+            System.out.println("Empty Set");
+            System.out.println("*********");
+        }
         System.out.println();
+    }
+
+    private static boolean verifyExist(String DQL) {
+        Connection connection = null;
+        Statement statement = null;
+        ResultSet resultSet = null;
+        boolean dataExist = false;
+        try {
+            connection=DB_Utility.connect();
+            statement=connection.createStatement();
+            resultSet=statement.executeQuery(DQL);
+            if (resultSet.next()){
+                dataExist=true;
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }finally {
+            DB_Utility.close(connection,statement,resultSet);
+        }
+        return dataExist;
     }
 
     public static int[] changePassword(int staffID) {
@@ -295,6 +333,8 @@ public class StaffOperation {
             }
         } catch (Exception e) {
             e.printStackTrace();
+        }finally {
+            DB_Utility.close(connection,preparedStatement,resultSet);
         }
 
         return staffInfo;

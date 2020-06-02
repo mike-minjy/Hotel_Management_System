@@ -8,9 +8,17 @@ import java.util.Scanner;
 
 public class Staff {
 
+    /**
+     * Prevent create an object of this class.
+     */
     private Staff() {
     }
 
+    /**
+     * The second control panel of entire program. (Staff Path)
+     *
+     * @return byte key
+     */
     public static byte startInterface() {
         DB_Utility.printCurrentTime();
         Scanner scanner = new Scanner(System.in);
@@ -46,6 +54,14 @@ public class Staff {
         }
     }
 
+    /**
+     * The Login implementation method <code>login()</code><br>
+     * It obtains two parameter from <code>verify()</code> method
+     * to check whether "Staff Name" and "Password" are existing in Staff table.
+     *
+     * @return int array (byte key, staffID)
+     * @throws Exception
+     */
     public static int[] login() throws Exception {
         int[] ints = {2, 0};
         Map<String, String> userLoginInfo = Guest.verify();
@@ -81,6 +97,12 @@ public class Staff {
         return ints;
     }
 
+    /**
+     * Staff could only change password for their own account.<br>
+     * They need input "Staff Name" and "Password" at first for verification.
+     *
+     * @return byte key
+     */
     public static byte changePassword() {
         Map<String, String> userLoginInfo = Guest.verify();
         if (userLoginInfo == null) {
