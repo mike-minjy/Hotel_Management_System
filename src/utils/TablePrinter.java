@@ -6,7 +6,9 @@ import java.io.StringWriter;
 import java.sql.*;
 import java.util.Vector;
 
-
+/**
+ * A table printer for the program. (GUI)
+ */
 public class TablePrinter {
 
     /**
@@ -17,11 +19,11 @@ public class TablePrinter {
 
     /**
      * This display method is only work for Data-Query-Language (DQL).
-     * The <>tableTitle</> is the "Title" of whole window.
+     * The <code>tableTitle</code> is the "Title" of whole float window.
      *
      * @param DQL
      * @param tableTitle
-     * @return
+     * @return int (Maximum Row Number)
      */
     static int display(String DQL, String tableTitle) {
         Connection connection = null;
@@ -74,7 +76,7 @@ public class TablePrinter {
      * Handle the exception in GUI format.
      *
      * @param e
-     * @return
+     * @return String (Exception Message)
      */
     private static String getErrorInfoFromException(Exception e) {
         try {

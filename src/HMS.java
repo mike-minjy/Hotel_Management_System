@@ -2,6 +2,9 @@ import utils.*;
 
 import java.util.Scanner;
 
+/**
+ * The program entrance class (Main class)
+ */
 public class HMS {
 
     /**

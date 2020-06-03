@@ -7,6 +7,9 @@ import java.sql.Statement;
 import java.util.Scanner;
 import java.util.regex.Pattern;
 
+/**
+ * All the staff operation would be handled by the methods from this class.
+ */
 public class StaffOperation {
 
     /**
@@ -15,6 +18,15 @@ public class StaffOperation {
     private StaffOperation() {
     }
 
+    /**
+     * It is an assistant part of <code>startInterface(int staffID, String username)</code><br>
+     * This <code>startInterface(int staffID)</code> method will fetch the staff name from database.<br>
+     * It will give a feedback to the user when they login their account.<br>
+     * They can check whether it is their account or not.
+     *
+     * @param staffID
+     * @return int array (byte key, staffID)
+     */
     public static int[] startInterface(int staffID) {
         Connection connection = null;
         PreparedStatement preparedStatement = null;
@@ -39,6 +51,14 @@ public class StaffOperation {
         return staffInfo;
     }
 
+    /**
+     * The main part of startInterface method, and it is the
+     * third step control panel of entire program. (Staff Path)
+     *
+     * @param staffID
+     * @param username
+     * @return int array (byte key, staffID)
+     */
     private static int[] startInterface(int staffID, String username) {
         DB_Utility.printCurrentTime();
         int[] staffInfo = {2, staffID};
@@ -84,6 +104,14 @@ public class StaffOperation {
         }
     }
 
+    /**
+     * Staff could check the detail information of booked room condition.<br>
+     * They can search for a specific type of room,
+     * or search all booked rooms whether in the past, now, and future.
+     *
+     * @param staffID
+     * @return int array (byte key, staffID)
+     */
     public static int[] roomManagement(int staffID) {
         DB_Utility.printCurrentTime();
         int[] staffInfo = {16, staffID};
@@ -145,6 +173,26 @@ public class StaffOperation {
         }
     }
 
+    /**
+     * The implementation method of how to search
+     * the booked rooms information of a specific room type.<br>
+     * It will show these information of a booked room order:
+     * <pre>
+     *     1. Real Name of Guest
+     *     2. Room ID
+     *     3. Room Type
+     *     4. Check-in Date
+     *     5. Check-out Date
+     * </pre>
+     * If there is no data, it will display:
+     * <pre>
+     *     *********
+     *     Empty Set
+     *     *********
+     * </pre>
+     *
+     * @param roomID
+     */
     private static void query(String roomID) {
         Connection connection = null;
         Statement statement = null;
@@ -200,6 +248,14 @@ public class StaffOperation {
         }
     }
 
+    /**
+     * Staff could search the booked meal information.<br>
+     * They can display all information from guests at once.<br>
+     * They can also use the Real Name of guest to search for the booked meal order from that person.
+     *
+     * @param staffID
+     * @return int array (byte key, staffID)
+     */
     public static int[] mealManagement(int staffID) {
         DB_Utility.printCurrentTime();
         int[] staffInfo = {16, staffID};
@@ -214,7 +270,7 @@ public class StaffOperation {
         Pattern pattern = Pattern.compile("^[[A-Za-z]|\\s]+$");//Real Name format
         while (true) {
             if (input.isEmpty()) {
-                displayAllMealOrder();
+                displayMealOrders();//Display all meal orders
                 System.out.print("You can type in the search contents here: ");
                 input = scanner.nextLine().trim().toLowerCase();
             } else if (input.equals("return")) {
@@ -224,7 +280,7 @@ public class StaffOperation {
                 System.out.print("Please type in a valid information: ");
                 input = scanner.nextLine().trim().toLowerCase();
             } else {
-                displayAnOrder(input);
+                displayMealOrders(input);//Display the meal order from a single person.
                 System.out.print("You can type in the search contents here: ");
                 input = scanner.nextLine().trim().toLowerCase();
             }
@@ -232,12 +288,23 @@ public class StaffOperation {
         return staffInfo;
     }
 
-    private static void displayAnOrder(String guestRealName) {
-        String sql = "SELECT bookedMeal_ID AS 'Order Code',chefName AS 'Chef Name',dishes AS 'Dish Name',serveDate AS 'Service Date',count AS 'Total Count',totalPrice AS 'Total Price' FROM BookedMeal NATURAL JOIN meal NATURAL JOIN chef NATURAL JOIN guest WHERE realName = '"+guestRealName+"'";
+    /**
+     * Display the meal orders of guests in a float window with GUI.<br>
+     * If there is no data in the specified contents from <code>mealManagement(int staffID)</code>,
+     * it will display:
+     * <pre>
+     *     *********
+     *     Empty Set
+     *     *********
+     * </pre>
+     * @param guestRealName
+     */
+    private static void displayMealOrders(String guestRealName) {
+        String sql = "SELECT bookedMeal_ID AS 'Order Code',chefName AS 'Chef Name',dishes AS 'Dish Name',serveDate AS 'Service Date',count AS 'Total Count',totalPrice AS 'Total Price' FROM BookedMeal NATURAL JOIN meal NATURAL JOIN chef NATURAL JOIN guest WHERE realName = '" + guestRealName + "'";
         boolean isExist = verifyExist(sql);
         if (isExist) {
-            TablePrinter.display(sql, "The Meal Orders of Guest: "+guestRealName);
-        }else {
+            TablePrinter.display(sql, "The Meal Orders of Guest: " + guestRealName);
+        } else {
             System.out.println("*********");
             System.out.println("Empty Set");
             System.out.println("*********");
@@ -245,12 +312,17 @@ public class StaffOperation {
         System.out.println();
     }
 
-    private static void displayAllMealOrder() {
+    /**
+     * The overload method of <code>displayMealOrders(String guestRealName)</code><br>
+     * It will display all meal orders from guests.<br>
+     * It has the same display rules of <code>displayMealOrders(String guestRealName)</code> method.
+     */
+    private static void displayMealOrders() {
         String sql = "SELECT realName AS 'Real Name of Guest', bookedMeal_ID AS 'Order Code',chefName AS 'Chef Name',dishes AS 'Dish Name',serveDate AS 'Service Date',count AS 'Total Count',totalPrice AS 'Total Price' FROM BookedMeal NATURAL JOIN meal NATURAL JOIN chef NATURAL JOIN guest";
         boolean isExist = verifyExist(sql);
         if (isExist) {
             TablePrinter.display(sql, "The Meal Orders of Guests");
-        }else {
+        } else {
             System.out.println("*********");
             System.out.println("Empty Set");
             System.out.println("*********");
@@ -258,26 +330,37 @@ public class StaffOperation {
         System.out.println();
     }
 
+    /**
+     * It will check whether the executed Data-Query-Language (DQL) gives Empty data set.
+     * @param DQL
+     * @return boolean (Distinguish the data set is empty or not)
+     */
     private static boolean verifyExist(String DQL) {
         Connection connection = null;
         Statement statement = null;
         ResultSet resultSet = null;
         boolean dataExist = false;
         try {
-            connection=DB_Utility.connect();
-            statement=connection.createStatement();
-            resultSet=statement.executeQuery(DQL);
-            if (resultSet.next()){
-                dataExist=true;
+            connection = DB_Utility.connect();
+            statement = connection.createStatement();
+            resultSet = statement.executeQuery(DQL);
+            if (resultSet.next()) {
+                dataExist = true;
             }
         } catch (Exception e) {
             e.printStackTrace();
-        }finally {
-            DB_Utility.close(connection,statement,resultSet);
+        } finally {
+            DB_Utility.close(connection, statement, resultSet);
         }
         return dataExist;
     }
 
+    /**
+     * Staff could also change their password after they login their account.
+     *
+     * @param staffID
+     * @return int array (byte key, staffID)
+     */
     public static int[] changePassword(int staffID) {
         DB_Utility.printCurrentTime();
         int[] staffInfo = {16, staffID};
@@ -333,8 +416,8 @@ public class StaffOperation {
             }
         } catch (Exception e) {
             e.printStackTrace();
-        }finally {
-            DB_Utility.close(connection,preparedStatement,resultSet);
+        } finally {
+            DB_Utility.close(connection, preparedStatement, resultSet);
         }
 
         return staffInfo;

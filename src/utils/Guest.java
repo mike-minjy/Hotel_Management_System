@@ -9,6 +9,9 @@ import java.util.Map;
 import java.util.Scanner;
 import java.util.regex.Pattern;
 
+/**
+ * Guest welcome interface.
+ */
 public class Guest {
 
     /**
@@ -18,7 +21,7 @@ public class Guest {
     }
 
     /**
-     * The second control panel of entire program. (Guest Path)
+     * The second step control panel of entire program. (Guest Path)
      *
      * @return byte key
      */

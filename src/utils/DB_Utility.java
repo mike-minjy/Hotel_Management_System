@@ -8,6 +8,10 @@ import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.ResourceBundle;
 
+/**
+ * Most of connection problem in this program would be solved in this class.<br>
+ * This class is usually used by other classes.
+ */
 public class DB_Utility {
 
     /**

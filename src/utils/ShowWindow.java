@@ -7,10 +7,15 @@ import java.sql.ResultSet;
 import java.sql.ResultSetMetaData;
 import java.util.Vector;
 
+/**
+ * This class is used for float window display of a table.
+ */
 class ShowWindow extends JFrame {
+
     JTable table;
     DefaultTableModel defaultModel;
 
+    //It will be initialised by the ResultSet, title Vector, and tableTitle.
     ShowWindow(ResultSet rs, Vector<String> title, String tableTitle) throws Exception {
         JFrame frame = new JFrame();
         frame.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);

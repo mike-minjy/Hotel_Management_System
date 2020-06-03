@@ -10,6 +10,9 @@ import java.util.Map;
 import java.util.Scanner;
 import java.util.regex.Pattern;
 
+/**
+ * Guests could book and cancel rooms or meal in this class.
+ */
 public class Booking {
 
     /**
@@ -18,6 +21,15 @@ public class Booking {
     private Booking() {
     }
 
+    /**
+     * It is an assistant part of <code>startInterface(int userID, String username)</code><br>
+     * This <code>startInterface(int userID)</code> method will fetch the guest name from database.<br>
+     * It will give a feedback to the user when they login their account.<br>
+     * They can check whether it is their account or not.
+     *
+     * @param userID
+     * @return int array (byte key, userID)
+     */
     public static int[] startInterface(int userID) {
         Connection connection = null;
         PreparedStatement preparedStatement = null;
@@ -42,14 +54,22 @@ public class Booking {
         return userInformation;
     }
 
+    /**
+     * The main part of startInterface method, and it is the
+     * third step control panel of entire program. (Guest Path)
+     *
+     * @param userID
+     * @param username
+     * @return int array (byte key, userID)
+     */
     private static int[] startInterface(int userID, String username) {
         DB_Utility.printCurrentTime();
         int[] ints = {1, userID};
         Scanner scanner = new Scanner(System.in);
         System.out.println("1. Book Rooms");
         System.out.println("2. Modify Booked Rooms");
-        System.out.println("3. Book Meal");//Still developing
-        System.out.println("4. Cancel Booked Meal");//Still developing
+        System.out.println("3. Book Meal");
+        System.out.println("4. Cancel Booked Meal");
         System.out.println("5. Update Personal Details");
         System.out.println("6. Log out");
         System.out.println("7. quit the system");
@@ -60,7 +80,7 @@ public class Booking {
         while (true) {
             switch (input) {
                 case "1":
-                case "book rooms"://Almost done
+                case "book rooms":
                     ints[0] = 11;
                     return ints;
                 case "2":
@@ -68,22 +88,22 @@ public class Booking {
                     ints[0] = 12;
                     return ints;
                 case "3":
-                case "book meal"://Still developing
+                case "book meal":
                     ints[0] = 13;
                     return ints;
                 case "4":
-                case "cancel booked meal"://Still developing
+                case "cancel booked meal":
                     ints[0] = 14;
                     return ints;
                 case "5":
-                case "update personal details"://Almost done
+                case "update personal details":
                     ints[0] = 15;
                     return ints;
                 case "6":
-                case "log out"://Done
+                case "log out":
                     return ints;
                 case "7":
-                case "quit the system"://Done
+                case "quit the system":
                     ints[0] = -1;
                     return ints;
                 default:
@@ -97,6 +117,51 @@ public class Booking {
         }
     }
 
+    /**
+     * Guest will book rooms in this method.<br>
+     * <br>
+     * <p>
+     * It will initially display all room types, then show the general layout of the hotel.
+     * Guest should select room type at first or click [Enter] to skip it,
+     * then they need to specify the check-in and check-out date.
+     * If they click [Enter] to skip specify the check-in date,
+     * the check-in date will be automatically set as today.
+     * If they click [Enter] to skip specify the check-out date, then check-out date will be set as
+     * the same day of check-in date.
+     * </p>
+     * <br>
+     * <p>
+     * If the guest's specified room type and time interval has more than one empty room,
+     * they can choose the specific room ID which they want to live in. If there is only one available
+     * room for their specified date and type, then a suitable condition room would be prepared for them.
+     * If there is no room for their specified date and type, then this system will display an "Exception"
+     * message for them and give some suggested room type for them in the same time interval. If there is
+     * no suggested room shown, then guest should change all their specified information again to book a room.
+     * </p>
+     * <pre>
+     *     Notice: The following issue has been partially solved.
+     * </pre>
+     * <p>
+     * This is because this solution cannot prevent already shown information
+     * stay valid after other guest book that room.
+     * </p>
+     * <br>
+     * <p>
+     * This function block is not thread safety, because the specified room might be booked by other
+     * guest. If they spend too much time and other guest who has conflict Time&Room type
+     * book the room at first, this specified room will also be shown to the current guest. It might
+     * be solved if I set the <code>Global Transaction Isolation Level</code> from
+     * <code>TRANSACTION_REPEATABLE_READ</code> to <code>TRANSACTION_READ_COMMITTED</code> then set it
+     * back to previous status.
+     * </p>
+     * <br>
+     * <p>
+     * The remaining issue might be solve by using "Overtime" reminder.
+     * </p>
+     *
+     * @param userID
+     * @return int array (byte key, userID)
+     */
     public static int[] bookRooms(int userID) {
         DB_Utility.printCurrentTime();
         int[] userInfo = {10, userID};
@@ -217,11 +282,6 @@ public class Booking {
                     while (true) {
                         printAvailableRooms(roomType_ID, checkInDate, checkOutDate);
                         System.out.println("You can click [Enter] to skip this step, then system will automatically arrange an empty room of same type for you.");
-                        //Try not make this happened
-//                        System.out.println("================================================================================================================================");
-//                        System.out.println("Notice: The last few rooms might be booked by other guests during this period.");
-//                        System.out.println("If you choose a room which has been booked after the selection, you will be random distribute a room for the same time interval.");
-//                        System.out.println("================================================================================================================================");
                         System.out.print("There are several available rooms, you can type in the number of roomID to choose a specific room now: ");
                         String room_ID_Handler = scanner.nextLine().trim();
                         if (room_ID_Handler.isEmpty()) {
@@ -273,6 +333,16 @@ public class Booking {
         return userInfo;
     }
 
+    /**
+     * This method will help user to randomly choose a room with one specified type.<br>
+     * The randomly chosen Room ID would be used to <code>INSERT INTO</code> the
+     * <code>BookedRoom</code> Table in database.
+     *
+     * @param userID
+     * @param roomType_ID
+     * @param checkInDate
+     * @param checkOutDate
+     */
     private static void insertData(int userID, byte roomType_ID, LocalDate checkInDate, LocalDate checkOutDate) {
         Connection connection = null;
         PreparedStatement preparedStatement = null;
@@ -302,6 +372,15 @@ public class Booking {
         insertData(userID, roomID, checkInDate, checkOutDate);
     }
 
+    /**
+     * This method will choose a room for user if they skip to specify a Room ID.<br>
+     * It is implemented by pass an object of <code>ResultSet</code> and randomly
+     * select one row from this result set via <code>Math.random()</code>
+     *
+     * @param resultSet
+     * @return int (Random Room ID)
+     * @throws Exception
+     */
     private static int getRandomRoom(ResultSet resultSet) throws Exception {
         int roomID = 0;
         resultSet.last();
@@ -317,6 +396,17 @@ public class Booking {
         return roomID;
     }
 
+    /**
+     * This method will help guest to check whether a specified room type is available or not.<br>
+     * If there is no room available, it will return 0.<br>
+     * If there is only one room available, it will return 1.<br>
+     * If there are many rooms available, it will return 2.
+     *
+     * @param roomType_ID
+     * @param checkInDate
+     * @param checkOutDate
+     * @return byte key (For multiple Room Check)
+     */
     private static byte checkNotBookedRooms(int roomType_ID, LocalDate checkInDate, LocalDate checkOutDate) {
         Connection connection = null;
         PreparedStatement preparedStatement = null;
@@ -342,7 +432,7 @@ public class Booking {
                 setData2(checkOutDate, checkInDate, preparedStatement, Date.valueOf(checkInDate), Date.valueOf(checkOutDate));
                 preparedStatement.setDate(9, Date.valueOf(checkOutDate));
             }
-
+            connection.setTransactionIsolation(Connection.TRANSACTION_READ_COMMITTED);
             resultSet = preparedStatement.executeQuery();
 
             if (resultSet.next()) {
@@ -351,7 +441,15 @@ public class Booking {
             if (resultSet.next()) {
                 notHasBeenBooked = 2;
             }
+            connection.setTransactionIsolation(Connection.TRANSACTION_REPEATABLE_READ);
         } catch (Exception e) {
+            if (connection != null) {
+                try {
+                    connection.setTransactionIsolation(Connection.TRANSACTION_REPEATABLE_READ);
+                } catch (Exception throwable) {
+                    throwable.printStackTrace();
+                }
+            }
             e.printStackTrace();
         } finally {
             DB_Utility.close(connection, preparedStatement, resultSet);
@@ -359,6 +457,14 @@ public class Booking {
         return notHasBeenBooked;
     }
 
+    /**
+     * It will check whether the guest specified room is available or not.
+     *
+     * @param roomID
+     * @param checkInDate
+     * @param checkOutDate
+     * @return boolean (The specified room is available or not.)
+     */
     private static boolean checkRoomID(int roomID, LocalDate checkInDate, LocalDate checkOutDate) {
         Connection connection = null;
         PreparedStatement preparedStatement = null;
@@ -378,10 +484,18 @@ public class Booking {
             setData2(checkOutDate, checkInDate, preparedStatement, Date.valueOf(checkInDate), Date.valueOf(checkOutDate));
             preparedStatement.setDate(9, Date.valueOf(checkOutDate));
 
+            connection.setTransactionIsolation(Connection.TRANSACTION_READ_COMMITTED);
             resultSet = preparedStatement.executeQuery();
             if (resultSet.next()) isAvailable = true;
-
+            connection.setTransactionIsolation(Connection.TRANSACTION_REPEATABLE_READ);
         } catch (Exception e) {
+            if (connection != null) {
+                try {
+                    connection.setTransactionIsolation(Connection.TRANSACTION_REPEATABLE_READ);
+                } catch (Exception throwable) {
+                    throwable.printStackTrace();
+                }
+            }
             e.printStackTrace();
         } finally {
             DB_Utility.close(connection, preparedStatement, resultSet);
@@ -389,6 +503,14 @@ public class Booking {
         return isAvailable;
     }
 
+    /**
+     * This method will show guest which room they can choose in the same specified time&type or
+     * show all available rooms in the same time interval.
+     *
+     * @param roomType_ID
+     * @param checkInDate
+     * @param checkOutDate
+     */
     private static void printAvailableRooms(int roomType_ID, LocalDate checkInDate, LocalDate checkOutDate) {
         Connection connection = null;
         PreparedStatement preparedStatement = null;
@@ -414,6 +536,7 @@ public class Booking {
                 preparedStatement.setDate(9, Date.valueOf(checkOutDate));
             }
 
+            connection.setTransactionIsolation(Connection.TRANSACTION_READ_COMMITTED);
             resultSet = preparedStatement.executeQuery();
             System.out.println("--------*------------------");
             System.out.println("  Room  |      Type");
@@ -422,37 +545,50 @@ public class Booking {
                 System.out.println();
             }
             System.out.println("--------*------------------");
+            connection.setTransactionIsolation(Connection.TRANSACTION_REPEATABLE_READ);
         } catch (Exception e) {
+            if (connection != null) {
+                try {
+                    connection.setTransactionIsolation(Connection.TRANSACTION_REPEATABLE_READ);
+                } catch (Exception throwable) {
+                    throwable.printStackTrace();
+                }
+            }
             e.printStackTrace();
         } finally {
             DB_Utility.close(connection, preparedStatement, resultSet);
         }
     }
 
+    /**
+     * This method will help guest to check whether a room is available in other time interval.<br>
+     * It works for modifying Check-in Date or Check-out Date method.
+     *
+     * @param connection
+     * @param BookedRoom_ID
+     * @param roomID
+     * @param checkInDate
+     * @param checkOutDate
+     * @return boolean (Check whether a room is available)
+     * @throws Exception
+     */
     private static boolean checkBookedRoom(Connection connection, int BookedRoom_ID, int roomID, LocalDate checkInDate, LocalDate checkOutDate) throws Exception {
         PreparedStatement preparedStatement;
         ResultSet resultSet;
         boolean hasBeenBooked = false;
         String sql;
 
-//        if (roomType_ID == 0) {
-//            sql = "SELECT * FROM Room LEFT OUTER JOIN BookedRoom USING (roomID) WHERE" +
-//                    " roomID IN(SELECT roomID FROM BookedRoom WHERE (checkInDate >= ? AND checkOutDate <= ?)OR(checkInDate <= ? AND checkOutDate >= ?)OR(checkInDate <= ? AND checkOutDate >= ?)OR(checkInDate <= ? AND checkOutDate >= ?))" +
-//                    " AND bookedRoom_ID = ?";
-//            preparedStatement = connection.prepareStatement(sql);
-//            setData1(checkInDate, checkOutDate, preparedStatement);
-//            preparedStatement.setInt(9,BookedRoom_ID);
-//        } else {
         sql = "SELECT * FROM Room LEFT OUTER JOIN BookedRoom USING (roomID) WHERE roomID = ?" +
                 " AND bookedRoom_ID IN(SELECT bookedRoom_ID FROM bookedroom WHERE (checkInDate >= ? AND checkOutDate <= ?)OR(checkInDate <= ? AND checkOutDate >= ?)OR(checkInDate <= ? AND checkOutDate >= ?)OR(checkInDate <= ? AND checkOutDate >= ?))" +
                 " AND bookedRoom_ID <> ?";
         preparedStatement = connection.prepareStatement(sql);
+
         preparedStatement.setInt(1, roomID);
         preparedStatement.setDate(2, Date.valueOf(checkInDate));
         setData2(checkOutDate, checkInDate, preparedStatement, Date.valueOf(checkInDate), Date.valueOf(checkOutDate));
         preparedStatement.setDate(9, Date.valueOf(checkOutDate));
         preparedStatement.setInt(10, BookedRoom_ID);
-//        }
+
         resultSet = preparedStatement.executeQuery();
 
         if (resultSet.next()) {
@@ -491,12 +627,33 @@ public class Booking {
         insertData(userID, roomID, checkInDate, checkOutDate);
     }
 
+    /**
+     * Gather the duplicate code block here for setting SQL statement
+     * which checks for room whether is available or not.
+     *
+     * @param checkInDate
+     * @param checkOutDate
+     * @param preparedStatement
+     * @throws Exception
+     */
     private static void setData1(LocalDate checkInDate, LocalDate checkOutDate, PreparedStatement preparedStatement) throws Exception {
         preparedStatement.setDate(1, Date.valueOf(checkInDate));
         preparedStatement.setDate(2, Date.valueOf(checkOutDate));
         setData2(checkInDate, checkOutDate, preparedStatement, Date.valueOf(checkInDate), Date.valueOf(checkOutDate));
     }
 
+    /**
+     * Gather another duplicate code block here for setting SQL statement
+     * which checks whether a room is available or not.
+     * It has some preset parameter index in the caller.
+     *
+     * @param checkInDate
+     * @param checkOutDate
+     * @param preparedStatement
+     * @param date1
+     * @param date2
+     * @throws Exception
+     */
     private static void setData2(LocalDate checkInDate, LocalDate checkOutDate, PreparedStatement preparedStatement, Date date1, Date date2) throws Exception {
         preparedStatement.setDate(3, Date.valueOf(checkInDate));
         preparedStatement.setDate(4, date1);
@@ -506,6 +663,14 @@ public class Booking {
         preparedStatement.setDate(8, Date.valueOf(checkOutDate));
     }
 
+    /**
+     * This method would INSERT data INTO the BookedRoom Table after a series of valid data inspection.
+     *
+     * @param userID
+     * @param roomID
+     * @param checkInDate
+     * @param checkOutDate
+     */
     private static void insertData(int userID, int roomID, LocalDate checkInDate, LocalDate checkOutDate) {
         Connection connection = null;
         PreparedStatement preparedStatement = null;
@@ -533,6 +698,17 @@ public class Booking {
         }
     }
 
+    /**
+     * It will filter out the input data from guest.<br>
+     * The user input date might be different from the required format, so
+     * this method will help them to check it and avoid crashing when
+     * program is running.
+     *
+     * @param scanner
+     * @param input
+     * @param isCheckInDate
+     * @return LocalDate (A Valid Date)
+     */
     private static LocalDate getValidDate(Scanner scanner, String input, boolean isCheckInDate) {
         Pattern pattern = Pattern.compile("^[-/_. 0-9]{1,10}$");
         int year, month, day;
@@ -616,6 +792,14 @@ public class Booking {
         return LocalDate.of(year, month, day);
     }
 
+    /**
+     * It gathers the duplicate code block of
+     * <code>getValidDate(Scanner scanner, String input, boolean isCheckInDate)</code>
+     * method and show the "Exception" message to guest.
+     *
+     * @param scanner
+     * @return String (A Date)
+     */
     private static String validDate(Scanner scanner) {
         System.out.println("============================");
         System.out.print("Please type in a valid date: ");
@@ -638,6 +822,10 @@ public class Booking {
         return false;//Default: shorter month
     }
 
+    /**
+     * This method only print out a general layout of this hotel.
+     * It could be substituted by GUI layout display approach.
+     */
     private static void printLayout() {
         System.out.println("The basic layout of hotel presented as below:");
         System.out.println("*----------------------------------------------------------------------------------------------*");
@@ -661,17 +849,29 @@ public class Booking {
         System.out.println();
     }
 
+    /**
+     * Guest has multiple chooses:
+     * <pre>
+     *     1. Modify Check-in Date
+     *     2. Modify Check-out Date
+     *     3. Cancel Booked Room
+     * </pre>
+     * They cannot modify check-in date if current date is their live-in date.<br>
+     * They cannot modify check-out date after they leave the hotel.<br>
+     * They cannot cancel booked room when they are living in hotel or has already left the hotel.
+     *
+     * @param userID
+     * @return int array (byte key, userID)
+     */
     public static int[] modifyRooms(int userID) {
         DB_Utility.printCurrentTime();
         int[] userInfo = {10, userID};
-        //Set the room cannot be canceled after guest leaved hotel
-        //If guest wants to leave hotel before check-out date, they can modify the check-out date
-        //the record cannot be "deleted" after guest live in the hotel
+        //If guest wants to leave hotel before or after check-out date, they can modify the check-out date
+        //The record cannot be "deleted" after guest live in the hotel
         Scanner scanner = new Scanner(System.in);
         System.out.println("1. Modify Check-in Date");
         System.out.println("2. Modify Check-out Date");
         System.out.println("3. Cancel Booked Room");
-//        System.out.println("4. Change room");
         System.out.println("4. Back to previous page");
         System.out.println("5. Log out");
         System.out.println("6. quit the system");
@@ -713,6 +913,15 @@ public class Booking {
         }
     }
 
+    /**
+     * The detail implementation of modify a check-in date,
+     * it will also check whether the guest input is valid or not.
+     * The input date will also be checked with other same room to prevent time conflict.
+     * It supports transaction.
+     *
+     * @param userID
+     * @return int array (byte key, userID)
+     */
     public static int[] modifyLiveInDate(int userID) {
         DB_Utility.printCurrentTime();
         int[] userInfo = {12, userID};
@@ -901,6 +1110,15 @@ public class Booking {
         return userInfo;
     }
 
+    /**
+     * The detail implementation of modify a check-out date,
+     * it will check whether the guest input date is valid or not.
+     * The input date will also be checked with other same room to prevent time conflict.
+     * It supports transaction.
+     *
+     * @param userID
+     * @return int array (byte key, userID)
+     */
     public static int[] modifyLeaveDate(int userID) {
         DB_Utility.printCurrentTime();
         int[] userInfo = {12, userID};
@@ -1085,6 +1303,14 @@ public class Booking {
         return userInfo;
     }
 
+    /**
+     * It will display the booked rooms of a specific person in formatted form.
+     *
+     * @param resultSet
+     * @param orderCodes
+     * @param index
+     * @throws Exception
+     */
     private static void printBookedRooms(ResultSet resultSet, int[] orderCodes, int index) throws Exception {
         resultSet.beforeFirst();
         if (resultSet.next()) {
@@ -1106,6 +1332,14 @@ public class Booking {
         System.out.println();
     }
 
+    /**
+     * The detail implementation of cancel booked rooms,
+     * it will check whether the guest input "Order Code" is valid or not.
+     * It supports transaction.
+     *
+     * @param userID
+     * @return int array (byte key, userID)
+     */
     public static int[] cancelBookedRoom(int userID) {
         int[] userInfo = {12, userID};
         Connection connection = null;
@@ -1217,6 +1451,14 @@ public class Booking {
         return userInfo;
     }
 
+    /**
+     * It will help <code>cancelBookedRoom(int userID)</code> method to
+     * check whether the guest input code is exist or not.
+     *
+     * @param orderCodes
+     * @param input
+     * @return boolean (has the code or not)
+     */
     private static boolean codesContains(int[] orderCodes, int input) {
         if (orderCodes.length == 0) return false;//Empty set cannot have any order code
         for (int eachCode : orderCodes) {
@@ -1227,10 +1469,25 @@ public class Booking {
         return false;//Input is not consistent with any order code in the array.
     }
 
+    /**
+     * This method will help guest to book meal.
+     * The guests could have 20% price discount if they satisfy these requirements:
+     * <pre>
+     *     1. Book the meal for the day after tomorrow
+     *     2. Living in the hotel at that time
+     * </pre>
+     * This method has adopted GUI display for meal information and chefs information.
+     * It could check whether guest input Date&Time is valid or not.
+     * It will check whether the specified date is consistent with chefs' workday.
+     * Guest can also set the number of each dish as they want to enjoy.
+     *
+     * @param userID
+     * @return int array (byte key, userID)
+     */
     public static int[] bookMeal(int userID) {
         DB_Utility.printCurrentTime();
         //No matter ordinary customer or guest of hotel can book meal in the hotel, but guest can get 20% discount.
-        //ordinary customer bookedRoom will set to false(0)
+        //ordinary customer bookedRoom condition will set to false(0)
         int[] userInfo = {10, userID};
         System.out.println("Sunny Isles Hotel provides various of meal.");
         System.out.println("You can obtain a 20% discount for the total price of booked meal.");
@@ -1271,14 +1528,14 @@ public class Booking {
         System.out.println("The weekday of chefs are listed in the float window.");
         System.out.println("You can reference the table for your meal booking.");
         System.out.println("----------------------------------------------------");
-        printWeekdayOfChefs();
+        printWorkdayOfChefs();
         //End
         //Start: Specify meal data and time
         LocalDateTime serveDateTime;
         while (true) {
-            System.out.println("(Notice: If you do not set a date, system will set the serve date as today.)");
-            System.out.println("(If you set the serve date as today, you cannot get the 20% discount.)");
-            System.out.print("Please type in the date of serve date: ");
+            System.out.println("(Notice: If you do not set a date, system will set the service date as today.)");
+            System.out.println("(If you set the service date as today, you cannot get the 20% discount.)");
+            System.out.print("Please type in the service date: ");
             String stringServeDateTime = scanner.nextLine().trim();
             LocalDate serveDate = getValidDate(scanner, stringServeDateTime, true);
             if (serveDate == null) {
@@ -1319,7 +1576,7 @@ public class Booking {
                 System.out.print("Or press [Enter] to continue: ");
                 String buffer = scanner.nextLine().trim().toLowerCase();
                 if (buffer.equals("show")) {
-                    printWeekdayOfChefs();
+                    printWorkdayOfChefs();
                 }
                 continue;
             }
@@ -1364,11 +1621,21 @@ public class Booking {
         return userInfo;
     }
 
+    /**
+     * The specific implementation of check chefs' workday.<br>
+     * It is feasible to utilise the <code>Calender</code> class, but it is
+     * not thread safety and API is not readable than the classes in <code>Time</code> package.
+     * In this class, the <code>DayOfWeek</code> was used instead of <code>Calendar</code>
+     *
+     * @param dishesType_ID
+     * @param serveDate
+     * @return boolean (Whether the chef work on a specified date)
+     */
     private static boolean verifyDayOfWeek(int dishesType_ID, LocalDate serveDate) {
         Connection connection = null;
         Statement statement = null;
         ResultSet resultSet = null;
-        boolean isWeekDay = false;
+        boolean isWorkDay = false;
         int chefID = 0;
         String sql;
         try {
@@ -1387,7 +1654,7 @@ public class Booking {
             resultSet = statement.executeQuery(sql);
             while (resultSet.next()) {
                 if (serveDate.getDayOfWeek().getValue() == resultSet.getInt(1)) {
-                    isWeekDay = true;
+                    isWorkDay = true;
                     break;
                 }
             }
@@ -1396,9 +1663,21 @@ public class Booking {
         } finally {
             DB_Utility.close(connection, statement, resultSet);
         }
-        return isWeekDay;
+        return isWorkDay;
     }
 
+    /**
+     * The final step of order a meal.
+     * It will check whether the guest is consistent with discount requirements.
+     * Afterwards, a discounted total price would
+     * be set on their meal if these requirements are satisfied.
+     *
+     * @param userID
+     * @param dishesType_ID
+     * @param serveDateTime
+     * @param count
+     * @param rightDay
+     */
     private static void insertOrderMealData(int userID, int dishesType_ID, LocalDateTime serveDateTime, int count, boolean rightDay) {
         boolean bookedRoom = checkWhetherHasBookedRoom(userID, serveDateTime.toLocalDate());
         float eachPrice = getPrice(dishesType_ID);
@@ -1429,6 +1708,12 @@ public class Booking {
         }
     }
 
+    /**
+     * It will get the price of each dish from database.
+     *
+     * @param dishesType_ID
+     * @return float (Price of each dish)
+     */
     private static float getPrice(int dishesType_ID) {
         Connection connection = null;
         Statement statement = null;
@@ -1450,6 +1735,13 @@ public class Booking {
         return eachPrice;
     }
 
+    /**
+     * It will check whether guest has booked room on the service date.
+     *
+     * @param userID
+     * @param serveDate
+     * @return boolean (Whether guest booked room)
+     */
     private static boolean checkWhetherHasBookedRoom(int userID, LocalDate serveDate) {
         Connection connection = null;
         PreparedStatement preparedStatement = null;
@@ -1473,6 +1765,21 @@ public class Booking {
         return bookedRoom;
     }
 
+    /**
+     * This method will help <code>bookMeal(int userID)</code> method to get a valid time
+     * of one day. The valid time is the meal available time.
+     * It can automatically set a time for guest with consideration of their current time,
+     * if they do not want to specify a time.
+     * It can also set seconds to 0 if guest has not set a specific second.
+     * It will automatically parse some time input, such as
+     * <pre>
+     *     12:88:67 ----> 13:39:07
+     * </pre>
+     *
+     * @param scanner
+     * @param serveTime
+     * @return LocalTime (A valid time)
+     */
     private static LocalTime getValidTime(Scanner scanner, String serveTime) {
         Pattern pattern = Pattern.compile("^[-:_/. 0-9]{1,8}$");
         int hour, minute, second;
@@ -1548,18 +1855,33 @@ public class Booking {
         return LocalTime.of(hour, minute, second);
     }
 
+    /**
+     * It gathers the duplicate part of <code>getValidTime(Scanner scanner, String serveTime)</code> method.
+     *
+     * @param scanner
+     * @return String (A Time)
+     */
     private static String validTime(Scanner scanner) {
         System.out.println("============================");
         System.out.print("Please type in a valid time: ");
         return scanner.nextLine().trim();
     }
 
-    private static void printWeekdayOfChefs() {
-        String sql = "SELECT day_Name AS 'Weekday', chefName AS 'Chef Name' FROM `schedule` NATURAL JOIN chef NATURAL JOIN OneWeek";
-        TablePrinter.display(sql, "The Weekday of Chefs");
+    /**
+     * It will display a chefs' workday list in a float window. (GUI)
+     */
+    private static void printWorkdayOfChefs() {
+        String sql = "SELECT chefName AS 'Chef Name', day_Name AS 'Workday' FROM `schedule` NATURAL JOIN chef NATURAL JOIN OneWeek";
+        TablePrinter.display(sql, "The Workday of Chefs");
         System.out.println();
     }
 
+    /**
+     * It will display a meal list of different dishes and chefs.
+     * For guest input verification, it will return the maximum row number.
+     *
+     * @return int (Max Row Number)
+     */
     private static int printChefAndMeal() {
         String sql = "SELECT dishesType_ID AS 'Row Number',chefName AS 'Chef Name', dishes AS 'Dishes', price AS 'Price per Dish' FROM meal NATURAL JOIN chef";
         int maxRow = TablePrinter.display(sql, "Chefs with Dishes, and Price");
@@ -1567,21 +1889,35 @@ public class Booking {
         return maxRow;
     }
 
+    /**
+     * The guest could cancel their meal order here.<br>
+     * The meal could only be cancelled before the service date.
+     *
+     * @param userID
+     * @return int array (byte key, userID)
+     */
     public static int[] cancelMeal(int userID) {
         DB_Utility.printCurrentTime();
         int[] userInfo = {10, userID};
         boolean isEmpty = getOrderCodes(userID).length == 0;
         if (isEmpty) {
-            System.out.println("==================================================================");
+            System.out.println("====================================================================");
             System.out.println("You should book a meal at first.");
-            System.out.println("Notice: You cannot cancel the meal order with serve date at today.");
-            System.out.println("==================================================================");
+            System.out.println("Notice: You cannot cancel the meal order with service date at today.");
+            System.out.println("====================================================================");
         } else {
             cancelMealOrder(userID);
         }
         return userInfo;
     }
 
+    /**
+     * The meal order of guest will be displayed on float window. (GUI)<br>
+     * The guest could cancel the meal by type in the order code.<br>
+     * It supports transaction.
+     *
+     * @param userID
+     */
     private static void cancelMealOrder(int userID) {
         System.out.println("---------------------------------------------------");
         System.out.println("Your booked would be presented in the float window.");
@@ -1686,7 +2022,14 @@ public class Booking {
         }
     }
 
-    @Deprecated//It's function is a subset of getOrderCodes(int) method.
+    /**
+     * The <code>getOrderCodes(int userID)</code> method has the same function as this method.<br>
+     * The <code>getOrderCodes(int userID)</code> method could implement
+     * this method by judging whether the length of return int array is 0 or not.
+     * @param userID
+     * @return boolean (Whether the guest has a meal order)
+     */
+    @Deprecated
     private static boolean verifyEmpty(int userID) {
         Connection connection = null;
         Statement statement = null;
@@ -1695,7 +2038,8 @@ public class Booking {
         try {
             connection = DB_Utility.connect();
             statement = connection.createStatement();
-            String sql = "SELECT bookedMeal_ID FROM bookedmeal WHERE userID = " + userID + " AND serveDate > '" + LocalDate.now().toString() + "'";
+            String sql = "SELECT bookedMeal_ID FROM bookedmeal WHERE userID = " + userID + " AND serveDate > '"
+                    + LocalDateTime.of(LocalDate.now(), LocalTime.MAX).format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")) + "'";
             resultSet = statement.executeQuery(sql);
             if (resultSet.next()) {
                 isEmpty = false;
@@ -1708,6 +2052,13 @@ public class Booking {
         return isEmpty;
     }
 
+    /**
+     * It will display the meal orders which could cancelled.<br>
+     * It will also return the corresponding order codes array at the same time.
+     *
+     * @param userID
+     * @return int array (Order Codes)
+     */
     private static int[] printBookedMeal(int userID) {
         String sql = "SELECT bookedMeal_ID AS 'Order Code',chefName AS 'Chef Name',dishes AS 'Dish Name',serveDate AS 'Service Date',count AS 'Total Count',totalPrice AS 'Total Price'" +
                 " FROM BookedMeal NATURAL JOIN meal NATURAL JOIN chef" +
@@ -1718,16 +2069,24 @@ public class Booking {
         return orderCodes;
     }
 
+    /**
+     * Ihe detail implementation of get order codes of booked meal.<br>
+     * It cooperates with <code>cancelMealOrder(int userID)</code> method to implement the
+     * transaction function.
+     *
+     * @param userID
+     * @return int array (Order Codes of booked meal)
+     */
     private static int[] getOrderCodes(int userID) {
-        Connection connection=null;
+        Connection connection = null;
         PreparedStatement preparedStatement = null;
         ResultSet resultSet = null;
         int[] orderCodes = null;
         try {
-            connection=DB_Utility.connect();
+            connection = DB_Utility.connect();
             String sql = "SELECT bookedMeal_ID FROM BookedMeal WHERE userID = ? AND serveDate > ?";
             preparedStatement = connection.prepareStatement(sql, ResultSet.TYPE_SCROLL_INSENSITIVE, ResultSet.CONCUR_READ_ONLY);
-            preparedStatement.setInt(1,userID);
+            preparedStatement.setInt(1, userID);
             preparedStatement.setTimestamp(2, Timestamp.valueOf(LocalDateTime.of(LocalDate.now(), LocalTime.MAX)));
             connection.setTransactionIsolation(Connection.TRANSACTION_READ_UNCOMMITTED);
             resultSet = preparedStatement.executeQuery();
@@ -1740,7 +2099,7 @@ public class Booking {
             }
             connection.setTransactionIsolation(Connection.TRANSACTION_REPEATABLE_READ);
         } catch (Exception e) {
-            if (connection!=null){
+            if (connection != null) {
                 try {
                     connection.setTransactionIsolation(Connection.TRANSACTION_REPEATABLE_READ);
                 } catch (Exception throwable) {
@@ -1754,6 +2113,12 @@ public class Booking {
         return orderCodes;
     }
 
+    /**
+     * Guest could also update their personal information after login their account.
+     *
+     * @param userID
+     * @return int array (byte key, userID)
+     */
     public static int[] update(int userID) {
         DB_Utility.printCurrentTime();
         int[] userInfo = {10, userID};

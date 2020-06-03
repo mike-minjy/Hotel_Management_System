@@ -6,6 +6,9 @@ import java.sql.ResultSet;
 import java.util.Map;
 import java.util.Scanner;
 
+/**
+ * Staff welcome interface.
+ */
 public class Staff {
 
     /**
@@ -15,7 +18,7 @@ public class Staff {
     }
 
     /**
-     * The second control panel of entire program. (Staff Path)
+     * The second step control panel of entire program. (Staff Path)
      *
      * @return byte key
      */
