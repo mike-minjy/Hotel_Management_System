@@ -563,6 +563,8 @@ public class Booking {
     /**
      * This method will help guest to check whether a room is available in other time interval.<br>
      * It works for modifying Check-in Date or Check-out Date method.
+     * It supports transaction, because other guests might change their check-in or check-out
+     * date when different guests operate on the same function block.
      *
      * @param connection
      * @param BookedRoom_ID
@@ -589,12 +591,14 @@ public class Booking {
         preparedStatement.setDate(9, Date.valueOf(checkOutDate));
         preparedStatement.setInt(10, BookedRoom_ID);
 
+        connection.setTransactionIsolation(Connection.TRANSACTION_READ_COMMITTED);
         resultSet = preparedStatement.executeQuery();
 
         if (resultSet.next()) {
             hasBeenBooked = true;
         }
 
+        connection.setTransactionIsolation(Connection.TRANSACTION_REPEATABLE_READ);
         resultSet.close();
         preparedStatement.close();
 
@@ -1065,7 +1069,7 @@ public class Booking {
                         } else {
                             System.out.println("=================================================");
                             System.out.println("There exists other guest living in this period.");
-                            System.out.print("Please type in other check-in date and try again: ");
+                            System.out.print("Please choose other check-in date and try again: ");
                         }
                         newLiveInDate = scanner.nextLine().trim().toLowerCase();
                         if (newLiveInDate.equals("return")) {
@@ -1099,6 +1103,7 @@ public class Booking {
             if (connection != null) {
                 try {
                     connection.rollback();
+                    connection.setTransactionIsolation(Connection.TRANSACTION_REPEATABLE_READ);
                 } catch (Exception throwable) {
                     throwable.printStackTrace();
                 }
@@ -1206,14 +1211,20 @@ public class Booking {
                     resultSet = preparedStatement.executeQuery(sql);
                     resultSet.next();
 
-                    System.out.println("-------------------------------------------------------------");
+                    System.out.println("---------------------------------------------------------------------");
                     System.out.println("Notice: The date regulation is the same as booking a room.");
                     System.out.println("Click [Enter] to set the check-out day same as check-in date.");
+                    System.out.println("If you have passed check-in date, press [Enter] will set it as today.");
                     System.out.print("Please type in the new leave date: ");
                     String newLeaveDate = scanner.nextLine().trim().toLowerCase();
                     LocalDate newCheckOutDate = getValidDate(scanner, newLeaveDate, false);
                     if (newCheckOutDate == LocalDate.MIN) {
-                        newCheckOutDate = resultSet.getDate("checkInDate").toLocalDate();
+                        LocalDate check_In_Date = resultSet.getDate("checkInDate").toLocalDate();
+                        if (check_In_Date.isAfter(LocalDate.now())) {
+                            newCheckOutDate = check_In_Date;
+                        } else {
+                            newCheckOutDate = LocalDate.now();
+                        }
                     }
                     while (newCheckOutDate == null) {
                         System.out.println("---------------------");
@@ -1265,7 +1276,7 @@ public class Booking {
                         } else {
                             System.out.println("==================================================");
                             System.out.println("There exists other guest living in this period.");
-                            System.out.print("Please type in other check-out date and try again: ");
+                            System.out.print("Please choose other check-out date and try again: ");
                         }
                         newLeaveDate = scanner.nextLine().trim().toLowerCase();
                         if (newLeaveDate.equals("return")) {
@@ -1296,6 +1307,14 @@ public class Booking {
                 }
             }
         } catch (Exception e) {
+            if (connection != null) {
+                try {
+                    connection.rollback();
+                    connection.setTransactionIsolation(Connection.TRANSACTION_REPEATABLE_READ);
+                } catch (Exception throwable) {
+                    throwable.printStackTrace();
+                }
+            }
             e.printStackTrace();
         } finally {
             DB_Utility.close(connection, preparedStatement, resultSet);
@@ -2009,7 +2028,6 @@ public class Booking {
                 }
             }
         } catch (Exception e) {
-            e.printStackTrace();
             if (connection != null) {
                 try {
                     connection.rollback();
@@ -2017,6 +2035,7 @@ public class Booking {
                     throwable.printStackTrace();
                 }
             }
+            e.printStackTrace();
         } finally {
             DB_Utility.close(connection, preparedStatement);
         }
@@ -2026,6 +2045,7 @@ public class Booking {
      * The <code>getOrderCodes(int userID)</code> method has the same function as this method.<br>
      * The <code>getOrderCodes(int userID)</code> method could implement
      * this method by judging whether the length of return int array is 0 or not.
+     *
      * @param userID
      * @return boolean (Whether the guest has a meal order)
      */

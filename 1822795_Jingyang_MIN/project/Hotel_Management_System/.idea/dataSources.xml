@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="DataSourceManagerImpl" format="xml" multifile-model="true">
+    <data-source source="LOCAL" name="MySQL - HMS@localhost" uuid="e301ebcc-a9a1-4422-8926-ccd8b756dbf7">
+      <driver-ref>mysql.8</driver-ref>
+      <synchronize>true</synchronize>
+      <jdbc-driver>com.mysql.cj.jdbc.Driver</jdbc-driver>
+      <jdbc-url>jdbc:mysql://localhost:3306/HMS?serverTimezone=GMT</jdbc-url>
+    </data-source>
+    <data-source source="LOCAL" name="Campus_OnlineDatabase" uuid="9ef9eeb6-e70a-43b8-8ef9-570f8032c2d3">
+      <driver-ref>mariadb</driver-ref>
+      <synchronize>true</synchronize>
+      <jdbc-driver>org.mariadb.jdbc.Driver</jdbc-driver>
+      <jdbc-url>jdbc:mysql://csse-mysql.xjtlu.edu.cn:3306/jingyangmin18</jdbc-url>
+    </data-source>
+  </component>
+</project>
